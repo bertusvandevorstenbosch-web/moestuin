@@ -1,0 +1,106 @@
+// Vaste naslagdata voor de Moestuin-app (Nederlands klimaat).
+
+const GEWASFAMILIES = {
+  "nachtschade": ["tomaat", "aardappel", "paprika", "aubergine", "peper"],
+  "kruisbloemigen": ["kool", "broccoli", "bloemkool", "radijs", "rucola", "paksoi", "koolrabi", "spruitjes"],
+  "vlinderbloemigen": ["boon", "bone", "erwt", "erwtje", "kapucijner", "tuinboon", "snijboon", "prinsessenboon"],
+  "cucurbitaceae": ["komkommer", "courgette", "pompoen", "meloen", "kalebas"],
+  "composieten": ["sla", "andijvie", "witlof", "artisjok", "zonnebloem", "endive"],
+  "leliefamilie": ["ui", "uitje", "knoflook", "prei", "sjalot", "bieslook"],
+  "wortelfamilie": ["wortel", "peen", "pastinaak", "venkel", "peterselie", "karwij"],
+  "bietfamilie": ["biet", "rode biet", "spinazie", "snijbiet", "mangold", "wortelraap"],
+  "grassen": ["mais", "tarwe", "gerst"],
+  "overig": []
+};
+
+function gewasFamilie(naam) {
+  const n = naam.toLowerCase();
+  for (const [familie, leden] of Object.entries(GEWASFAMILIES)) {
+    if (familie === "overig") continue;
+    for (const lid of leden) {
+      if (n.includes(lid)) return familie;
+    }
+  }
+  return "overig";
+}
+
+const MAANDNAMEN = [
+  "januari", "februari", "maart", "april", "mei", "juni",
+  "juli", "augustus", "september", "oktober", "november", "december"
+];
+
+// Zaaischema per maand (gemiddeld Nederlands klimaat).
+const ZAAISCHEMA = {
+  1:  { zaai: [], plant: ["stokuien (onder glas)"], oogst: ["winterpostelein", "andijvie (dekfol)"] },
+  2:  { zaai: ["pepers", "paprika's", "aubergines (binnen)", "tomaten (binnen, late maand)"], plant: [], oogst: ["wintergroenten", "peterselie"] },
+  3:  { zaai: ["erwten", "wortels", "radijs", "spinazie", "sla (onder glas)", "stokbonen (onder glas)"], plant: ["aardappelen (vroeg)", "uitjes", "sjalotten"], oogst: ["spruitjes", "winterkool", "prei"] },
+  4:  { zaai: ["wortels", "radijs", "sla", "bieten", "erwten", "koolsoorten", "snijbiet"], plant: ["aardappelen", "uienzetten"], oogst: ["radijs", "spinazie", "lente-uitjes"] },
+  5:  { zaai: ["bonen", "maïs", "komkommers (buiten, late maand)", "courgettes", "sla (om de paar weken)"], plant: ["tomaten (buiten, na ijsheiligen)", "paprika", "komkommer"], oogst: ["radijs", "sla", "vroege aardappelen (late maand)"] },
+  6:  { zaai: ["bonen", "sla", "wortels (late maand)", "radijs", "andijvie"], plant: ["pompoenen", "koolsoorten", "prei"], oogst: ["sla", "radijs", "eerste courgettes", "doperwten"] },
+  7:  { zaai: ["sla (zomersla)", "andijvie", "spinazie (late maand)", "radijs", "herfstbieten"], plant: ["herfstprei"], oogst: ["tomaten", "courgettes", "bonen", "komkommers", "aardappelen"] },
+  8:  { zaai: ["spinazie", "winterpostelein", "sla (onder glas)", "rammenas", "winteruitjes"], plant: [], oogst: ["tomaten", "paprika", "courgettes", "pompoenen (late maand)", "bieten", "prei"] },
+  9:  { zaai: ["winterradijs", "sla (late maand)", "spinazie"], plant: ["aardbeien (nieuwe planten)", "winterprei"], oogst: ["pompoenen", "tomaten", "bonen", "koolrabi", "maïs"] },
+  10: { zaai: ["winteraandijvie (late maand)"], plant: ["knoflook", "winteruitjes"], oogst: ["pompoenen", "knolselderij", "late koolsoorten", "bieten (voor de vorst)"] },
+  11: { zaai: [], plant: ["knoflook (late maand)", "winterprei"], oogst: ["spruitjes", "winterkool", "late prei", "wortelen (voor de vorst)"] },
+  12: { zaai: [], plant: [], oogst: ["spruitjes", "winterkool", "prei", "pastinaak (na vorst zoeter)"] }
+};
+
+const PLAGEN = [
+  {
+    naam: "Bladluis",
+    herkennen: "Kleine (groene, zwarte of grijze) insecten in dichte groepen op jonge scheuten en bladonderkanten. Blad krult en wordt kleverig (honingdauw).",
+    aanpak: "Afspuiten met water, lieveheersbeestjes aanlokken, brandnetel- of zeepoplossing spuiten. Sterke planten houden er minder last van."
+  },
+  {
+    naam: "Slakken (naaktslakken)",
+    herkennen: "Zilverkleurige slijmsporen en gaten in blad, vooral na regen en 's nachts. Jonge plantjes kunnen in één nacht kaal worden.",
+    aanpak: "'s Avonds of vroeg in de ochtend handmatig rapen, koperlint of scherpe mulch rond gevoelige planten, eendenkroosvijver in de buurt vermijden. Vochtplaatsen opdrogen."
+  },
+  {
+    naam: "Witte vlieg",
+    herkennen: "Kleine witte vlindertjes die opvliegen als je het blad raakt, plus witte poppjes op de onderkant van blad. Vaak in kas of serre.",
+    aanpak: "Gele plakstrips ophangen, aangetast blad verwijderen, natuurlijke vijanden (Encarsia) inzetten in de kas."
+  },
+  {
+    naam: "Meeldauw",
+    herkennen: "Witgrijs poederachtig laagje op de bovenkant van blad. Blad wordt daarna geel en droogt. Vooral bij droog, warm weer.",
+    aanpak: "Aangetast blad direct weghalen (niet op de compost), planten meer ruimte en lucht geven, onder i.p.v. bovenop de bladeren gieten. Melkverdunde spray kan helpen."
+  },
+  {
+    naam: "Valse meeldauw",
+    herkennen: "Geelachtige vlekken aan de bovenkant van het blad met een paarsgrijze dons aan de onderkant. Komt vooral voor bij nat weer.",
+    aanpak: "Aangetaste bladeren verwijderen, regenscherm of overkapping bij gevoelige gewassen (sla, ui), niet 's avonds gieten."
+  },
+  {
+    naam: "Rupsen (koolwitje)",
+    herkennen: "Gaten in koolbladeren en kleine zwarte streepjes (poep). Groene rupsen op de bladonderkant; bij kool vaak eitjes in legsel.",
+    aanpak: "Eitjes en rupsen handmatig zoeken en verwijderen, insectengaas over de koolbedden, vogels aanlokken. Bt-preparaat is een biologisch middel bij ernstige aantasting."
+  },
+  {
+    naam: "Aardappelziekte (phytophthora)",
+    herkennen: "Bruine watervlekken op blad met witte schimmelrand aan de onderkant, vooral vochtig warm weer. Knollen worden bruin en rottend.",
+    aanpak: "Aangetaste planten direct verwijderen (afvoeren, niet composteren), resistente rassen kiezen, niet bovenop de bladeren gieten, voldoende plantafstand."
+  },
+  {
+    naam: "Mijnvlieg",
+    herkennen: "Windinge, lichtgekleurde gangen (minen) in het blad, gemaakt door kleine larfjes. Vooral bij sla, biet en spinazie.",
+    aanpak: "Aangetaste bladeren verwijderen, insectengaas over gevoelige gewassen, niet te dicht op elkaar planten."
+  },
+  {
+    naam: "Egelantierzwam / verticillium (verwelkingsziekte)",
+    herkennen: "Plant verwelkt ondanks voldoende water, vaak aan één kant. Vaatbundels in de stengel zijn bruinig door gekleurd hout.",
+    aanpak: "Geen remedie: aangetaste planten verwijderen. Voorkom via vruchtwisseling en gezonde bodem. Niet meerdere jaren achter elkaar dezelfde familie op een perk."
+  },
+  {
+    naam: "Mieren met bladluizen",
+    herkennen: "Mieren lopen op en neer over planten die ook bladluizen hebben: ze 'melken' de luizen en beschermen ze.",
+    aanpak: "Bladluizen bestrijden zodat de mieren geen voedsel meer hebben, mierenhoop verplaatsen met een pot, plakband rond stelen bij fruitbomen."
+  }
+];
+
+const TAAKSJABLONEN = [
+  { naam: "Watergeven", freqDagen: 2 },
+  { naam: "Onkruid wieden", freqDagen: 7 },
+  { naam: "Bemesten (compost)", freqDagen: 30 },
+  { naam: "Mulch aanleggen", freqDagen: 60 }
+];
