@@ -6,7 +6,7 @@ en je gegevens blijven op je eigen apparaat.
 ## Wat kan de app?
 
 - **Perken** — verdeel je tuin in perken/vakken en zie wat waar staat
-- **Gewassen** — met ras, zaaidatum, oogstdatum en status
+- **Gewassen** — met ras, zaaidatum, oogstdatum, status en foto's van het zadenzakje (voor- en achterkant)
 - **Taken** — terugkerende klussen (watergeven, wieden, bemesten) met herinnering wat er te laat is
 - **Groei-logboek** — notities per gewas: zaai, kieming, oogst, plagen, opmerkingen
 - **Zaaischema** — per maand wat je in het Nederlandse klimaat kunt zaaien, planten en oogsten
