@@ -11,6 +11,7 @@ en je gegevens blijven op je eigen apparaat.
 - **Groei-logboek** — notities per gewas: zaai, kieming, oogst, plagen, opmerkingen
 - **Zaaischema** — per maand wat je in het Nederlandse klimaat kunt zaaien, planten en oogsten
 - **Vruchtwisseling** — waarschuwing als een gewasfamilie twee jaar achter elkaar op hetzelfde perk staat
+- **Companion planting (buren)** — goede en slechte buurgewassen, ook als hint bij je eigen gewassen
 - **Plagen & ziektes** — naslag met herkenning en biologische aanpak
 - **Back-up** — exporteer/importeer je gegevens als JSON-bestand (bijv. om in Google Drive te bewaren)
 

@@ -104,3 +104,114 @@ const TAAKSJABLONEN = [
   { naam: "Bemesten (compost)", freqDagen: 30 },
   { naam: "Mulch aanleggen", freqDagen: 60 }
 ];
+
+// Companion planting: goede en slechte buren per gewas.
+const COMPANION = {
+  "tomaat": {
+    goed: ["basilicum", "wortel", "selderij", "ui", "peterselie", "afrikaantje", "sla"],
+    slecht: ["venkel", "kool", "aardappel", "dille (volgroeid)"]
+  },
+  "paprika": {
+    goed: ["basilicum", "ui", "spinazie", "tomaat", "wortel"],
+    slecht: ["venkel", "koolrabi", "venkelzaad"]
+  },
+  "aubergine": {
+    goed: ["bonen", "tijm", "afrikaantje", "paprika"],
+    slecht: ["venkel"]
+  },
+  "sla": {
+    goed: ["wortel", "radijs", "aardbei", "komkommer", "ui", "biet"],
+    slecht: ["peterselie"]
+  },
+  "kool": {
+    goed: ["ui", "selderij", "biet", "dille", "kamille", "munt", "aardappel"],
+    slecht: ["tomaat", "venkel", "aardbei", "stokboon"]
+  },
+  "broccoli": {
+    goed: ["ui", "selderij", "biet", "dille", "kamille"],
+    slecht: ["tomaat", "aardbei", "venkel"]
+  },
+  "boon": {
+    goed: ["aardappel", "wortel", "komkommer", "mais", "aardbei", "bonenkruid", "radijs"],
+    slecht: ["ui", "knoflook", "venkel", "prei"]
+  },
+  "erwt": {
+    goed: ["wortel", "radijs", "komkommer", "mais", "rapen", "bonenkruid"],
+    slecht: ["ui", "knoflook", "prei", "sjalot"]
+  },
+  "ui": {
+    goed: ["wortel", "biet", "aardbei", "sla", "kamille", "paprika"],
+    slecht: ["boon", "erwt", "asperge", "salie"]
+  },
+  "knoflook": {
+    goed: ["wortel", "biet", "aardbei", "tomaat", "kamille"],
+    slecht: ["boon", "erwt", "prei", "aardappel"]
+  },
+  "prei": {
+    goed: ["wortel", "selderij", "ui", "aardbei"],
+    slecht: ["boon", "erwt"]
+  },
+  "wortel": {
+    goed: ["ui", "prei", "sla", "erwt", "tomaat", "salie", "rozemarijn", "radijs"],
+    slecht: ["dille", "venkel"]
+  },
+  "biet": {
+    goed: ["ui", "sla", "kool", "koolrabi", "knoflook"],
+    slecht: ["stokboon", "mosterd"]
+  },
+  "aardappel": {
+    goed: ["boon", "kool", "mais", "mierikswortel", "afrikaantje", "spinazie"],
+    slecht: ["tomaat", "komkommer", "zonnebloem", "venkel", "selderij"]
+  },
+  "komkommer": {
+    goed: ["boon", "erwt", "sla", "ui", "dille", "radijs", "zonnebloem"],
+    slecht: ["aardappel", "salie", "venkel"]
+  },
+  "courgette": {
+    goed: ["boon", "erwt", "mais", "bernagie", "afrikaantje"],
+    slecht: ["aardappel"]
+  },
+  "pompoen": {
+    goed: ["mais", "boon", "bernagie", "afrikaantje"],
+    slecht: ["aardappel"]
+  },
+  "spinazie": {
+    goed: ["aardbei", "erwt", "boon", "bloemkool", "radijs", "paprika"],
+    slecht: ["venkel"]
+  },
+  "aardbei": {
+    goed: ["bernagie", "sla", "ui", "spinazie", "boon", "prei"],
+    slecht: ["kool", "broccoli", "venkel"]
+  },
+  "mais": {
+    goed: ["boon", "erwt", "komkommer", "meloen", "pompoen", "aardappel"],
+    slecht: ["tomaat", "selderij"]
+  },
+  "radijs": {
+    goed: ["sla", "wortel", "erwt", "komkommer", "spinazie", "kervel"],
+    slecht: ["hyssop"]
+  },
+  "venkel": {
+    goed: [],
+    slecht: ["de meeste gewassen — zet venkel apart"]
+  },
+  "selderij": {
+    goed: ["kool", "prei", "tomaat", "boon", "leek"],
+    slecht: ["mais", "aardappel", "pastinaak"]
+  },
+  "kruiden (basilicum, dille, peterselie)": {
+    goed: ["tomaat", "paprika", "kool", "wortel"],
+    slecht: ["rue (wijnruit)"]
+  }
+};
+
+function vindCompanions(naam) {
+  const n = (naam || "").toLowerCase();
+  for (const [sleutel, info] of Object.entries(COMPANION)) {
+    const delen = sleutel.split(",").map(s => s.trim().toLowerCase());
+    for (const deel of delen) {
+      if (n.includes(deel) || deel.includes(n)) return info;
+    }
+  }
+  return null;
+}
