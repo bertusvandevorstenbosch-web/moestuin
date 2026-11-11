@@ -54,13 +54,11 @@ views.home = function () {
   const laatste = BLOGPOSTS.slice(0, 2);
   const inDeShop = PRODUCTEN.filter(p => p.opVoorraad).slice(0, 3);
   return `
-    <section class="hero">
-      <h1>Cruquius Crafts</h1>
-      <p>Urban boerderij in ${SITE.plaats}. Anna draait ceramiek, de moestuin levert het seizoen,
-      en in de keuken wordt alles samengebracht. Handgemaakt, dichtbij, eerlijk.</p>
+    <section class="banner-sectie">
+      <img class="banner" src="images/banner.png" alt="Cruquius Crafts — lokaal, ambachtelijk, met passie">
       <div class="hero-knoppen">
         <a class="knop primair" href="#/winkel">Bekijk de winkel</a>
-        <a class="knop lijn" href="#/workshops">Workshops</a>
+        <a class="knop groen" href="#/workshops">Workshops</a>
       </div>
     </section>
 
