@@ -1,5 +1,5 @@
 // Service worker: cached de app-bestanden zodat de app offline werkt.
-const CACHE_NAAM = "moestuin-v2";
+const CACHE_NAAM = "moestuin-v3";
 const BESTANDEN = [
   "./",
   "./index.html",
@@ -27,6 +27,18 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
+  if (e.request.mode === "navigate") {
+    e.respondWith(
+      fetch(e.request)
+        .then(resp => {
+          const kopie = resp.clone();
+          caches.open(CACHE_NAAM).then(c => c.put("./index.html", kopie));
+          return resp;
+        })
+        .catch(() => caches.match("./index.html"))
+    );
+    return;
+  }
   e.respondWith(
     caches.match(e.request).then(gecached => gecached || fetch(e.request))
   );
