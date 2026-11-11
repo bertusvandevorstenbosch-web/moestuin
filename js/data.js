@@ -239,3 +239,73 @@ function plantAfstand(naam) {
   }
   return 25;
 }
+
+// Bewaren van groenten: methodes en houdbaarheid.
+const BEWAREN = [
+  { naam: "Aardappel", methodes: [
+    { manier: "Donker en koel bewaren", duur: "maanden", hoe: "7–10 °C, volledig donker (papierzak of kist), never in de koelkast (wordt zoet van smaak). Niet bewaren naast ui." },
+    { manier: "In de grond laten", duur: "tot de vorst", hoe: "Ongerooide aardappelen blijven prima in de grond; oogst bij behov." }
+  ]},
+  { naam: "Ui en sjalot", methodes: [
+    { manier: "Droog en luchtig", duur: "6–12 maanden", hoe: "Eerst 2 weken laten drogen met loof eraan, dan vlechten of in netjes. Droog, geventileerd, 5–15 °C." }
+  ]},
+  { naam: "Knoflook", methodes: [
+    { manier: "Droog en donker", duur: "6–8 maanden", hoe: "Zelfde als ui: drogen met steel, dan vlechten of in mandje. Zetjes apart leggen voor het volgende seizoen." }
+  ]},
+  { naam: "Pompoen", methodes: [
+    { manier: "Kamerkoel bewaren", duur: "3–6 maanden", hoe: "10–15 °C, droog, met 5 cm steel eraan. Niet op beton. Eerst narijpen op venster." }
+  ]},
+  { naam: "Tomaat", methodes: [
+    { manier: "Nageel laten rijpen", duur: "weken", hoe: "Groene tomaten bij 15 °C op venster, tussenzit met banaan versnelt." },
+    { manier: "Saus en invriezen", duur: "12 maanden", hoe: "Passata, soep of gestoofd invriezen in bakjes — de beste manier voor grote oogsten." },
+    { manier: "Inleggen", duur: "12+ maanden", hoe: "Gesteriliseerde potten met tomaten, zout en citroenzuur of als chutney." }
+  ]},
+  { naam: "Wortel", methodes: [
+    { manier: "In zand bewaren", duur: "4–6 maanden", hoe: "Kist met licht vochtig zand, wortels rechtop erin, koel en vorstvrij (kelder, garage)." },
+    { manier: "In de grond laten", duur: "tot de vorst", hoe: "Bedekken met stro of vliesdoek; vorst maakt ze juist zoeter." }
+  ]},
+  { naam: "Rode biet", methodes: [
+    { manier: "In zand", duur: "3–5 maanden", hoe: "Zoals wortel: in zandkist, loof 2 cm boven de biet laten." },
+    { manier: "Koken en invriezen", duur: "12 maanden", hoe: "Koken, schillen, in stukken of plakken invriezen." },
+    { manier: "Inleggen (zoetzuur)", duur: "12+ maanden", hoe: "Gekookte beten in azijn-kruidenbad; klassiek bij stamppot." }
+  ]},
+  { naam: "Koolsoorten", methodes: [
+    { manier: "Ophangen", duur: "witte kool: maanden", hoe: "Witte en rode kool in koele schuur of kelder ophangen aan de stronk, 0–5 °C." },
+    { manier: "Blancheren en invriezen", duur: "12 maanden", hoe: "Broccoli, bloemkool en spruitjes: 2–3 min. blancheren, koud afspoelen, invriezen." },
+    { manier: "Fermenteren", duur: "12+ maanden", hoe: "Zuurkool van witte kool: schaven, 2% zout, stevig aandrukken, 3–6 weken fermenteren." }
+  ]},
+  { naam: "Courgette", methodes: [
+    { manier: "Invriezen", duur: "10–12 maanden", hoe: "In stukken of geraspt (voor in soep/cake), eventueel eerst licht gestoofd." },
+    { manier: "Inleggen", duur: "12 maanden", hoe: "Als pickles of in chutney — kleine exemplaren zijn hiervoor het best." }
+  ]},
+  { naam: "Bonen (snij/stok)", methodes: [
+    { manier: "Blancheren en invriezen", duur: "12 maanden", hoe: "2 min. blancheren, ijsbad, invriezen — behoudt kleur en bite." },
+    { manier: "Inleggen als zure bonen", duur: "12+ maanden", hoe: "Klassiek inlegsel met azijn, mosterdzaad en dille." },
+    { manier: "Drogen (droge boon)", duur: "jaarlijks", hoe: "Peulen laten indrogen aan de plant, bonen doppen en verder drogen." }
+  ]},
+  { naam: "Erwten", methodes: [
+    { manier: "Direct invriezen", duur: "12 maanden", hoe: "Zo snel mogelijk na plukken blancheren (1 min.) en invriezen — suiker zet snel om naar zetmeel." }
+  ]},
+  { naam: "Paprika en peper", methodes: [
+    { manier: "Invriezen", duur: "10–12 maanden", hoe: "In reepjes of heel invriezen — na ontdooien wat zachter, prima voor sauzen." },
+    { manier: "Drogen (pepers)", duur: "jaarlijks", hoe: "Pepers aan een draad ophangen op warme droge plek, of in de oven op 50 °C." }
+  ]},
+  { naam: "Prei", methodes: [
+    { manier: "In de grond laten", duur: "door de winter", hoe: "Prei is vorstbestendig; oogst naar behoefte. Bij strenge vorst afdekken met vliesdoek." },
+    { manier: "Invriezen", duur: "10 maanden", hoe: "In ringen snijden, licht blancheren, invriezen — ideaal voor soep." }
+  ]},
+  { naam: "Spinazie en snijbiet", methodes: [
+    { manier: "Blancheren en invriezen", duur: "12 maanden", hoe: "30–60 sec. blancheren, goed uitpersen, in porties invriezen." }
+  ]},
+  { naam: "Sla en radijs", methodes: [
+    { manier: "Niet lang bewaarbaar", duur: "dagen", hoe: "Sla oogst je per behoefte. Radijs: 1–2 weken in de koelkast in een zakje met wat vocht." }
+  ]},
+  { naam: "Kruiden (basilicum, peterselie, dille...)", methodes: [
+    { manier: "Invriezen in olie", duur: "6–12 maanden", hoe: "Fijnhakken, in ijsblokjesvorm met olijfolie — klaar voor in de pan." },
+    { manier: "Drogen", duur: "12 maanden", hoe: "Omgekeerd ophangen op donkere, droge plek; tijm, oregano en salie drogen het best." }
+  ]},
+  { naam: "Aardbei en klein fruit", methodes: [
+    { manier: "Invriezen op tray", duur: "10–12 maanden", hoe: "Eerst los invriezen op een bord, dan overdoen in zak — geen klont." },
+    { manier: "Jam en siroop", duur: "12+ maanden", hoe: "Klassieke jam met geleimiddel, of siroop voor in limonade." }
+  ]}
+];
