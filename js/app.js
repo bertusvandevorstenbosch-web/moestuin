@@ -18,7 +18,33 @@ function laagData() {
 }
 
 function bewaar() {
-  localStorage.setItem(OPSLAGSLEUTEL, JSON.stringify(data));
+  try {
+    localStorage.setItem(OPSLAGSLEUTEL, JSON.stringify(data));
+  } catch {
+    toast("Opslag vol — verwijder enkele foto's of maak een back-up");
+  }
+}
+
+function leesAfbeelding(bestand, maxZijde = 900) {
+  return new Promise((oplossing, afwijzing) => {
+    if (!bestand) return oplossing(null);
+    const lezer = new FileReader();
+    lezer.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const schaal = Math.min(1, maxZijde / Math.max(img.width, img.height));
+        const canvas = document.createElement("canvas");
+        canvas.width = Math.round(img.width * schaal);
+        canvas.height = Math.round(img.height * schaal);
+        canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
+        oplossing(canvas.toDataURL("image/jpeg", 0.65));
+      };
+      img.onerror = () => afwijzing(new Error("kon afbeelding niet lezen"));
+      img.src = lezer.result;
+    };
+    lezer.onerror = () => afwijzing(lezer.error);
+    lezer.readAsDataURL(bestand);
+  });
 }
 
 function uid() {
@@ -77,8 +103,9 @@ function openModal(titel, formHtml, bijOpslaan) {
     e.preventDefault();
     const waarden = {};
     new FormData(e.target).forEach((v, k) => { waarden[k] = v; });
-    bijOpslaan(waarden);
-    modal.close();
+    const resultaat = bijOpslaan(waarden);
+    if (resultaat && resultaat.then) resultaat.then(() => modal.close());
+    else modal.close();
   };
 }
 
@@ -175,6 +202,14 @@ function toonInstallHint() {
 }
 
 // ---------- PERKEN ----------
+function fotoRij(g) {
+  const fotos = [["voor", g.fotoVoor], ["achter", g.fotoAchter]].filter(f => f[1]);
+  if (!fotos.length) return "";
+  return `<div class="foto-rij">${fotos.map(([label, src]) =>
+    `<figure class="foto-thumb" data-foto="${g.id}|${label}"><img src="${src}" alt="zadenzakje ${label}"><figcaption>${label}</figcaption></figure>`
+  ).join("")}</div>`;
+}
+
 function perkNaam(perkId) {
   const p = data.perken.find(x => x.id === perkId);
   return p ? p.naam : "hele tuin";
@@ -255,6 +290,7 @@ views.gewassen = function () {
           <span class="badge ${statusKleur}">${escape(g.status)}</span>
         </div>
         ${compRegel}
+        ${fotoRij(g)}
         <div class="acties" style="justify-content:flex-end; display:flex; gap:6px;">
           <button class="knop klein secundair" data-log-gewas="${g.id}">+ Log</button>
           <button class="knop klein secundair" data-bewerk-gewas="${g.id}">Bewerk</button>
@@ -282,7 +318,17 @@ function gewasFormulier(gewas) {
       <label class="veld">Oogstdatum<input type="date" name="oogstDatum" value="${escape(gewas.oogstDatum || "")}"></label>
     </div>
     <label class="veld">Status<select name="status">${statusOpties}</select></label>
-    <label class="veld">Opmerking<textarea name="opmerking">${escape(gewas.opmerking || "")}</textarea></label>`;
+    <label class="veld">Opmerking<textarea name="opmerking">${escape(gewas.opmerking || "")}</textarea></label>
+    <label class="veld">Foto zadenzakje — voorkant
+      ${gewas.fotoVoor ? `<img src="${gewas.fotoVoor}" class="form-foto" alt="voorkant zadenzakje">` : ""}
+      <input type="file" accept="image/*" id="foto-voor-bestand">
+      ${gewas.fotoVoor ? `<span class="verwijder-check"><input type="checkbox" name="verwijderFotoVoor" style="width:auto"> huidige foto verwijderen</span>` : ""}
+    </label>
+    <label class="veld">Foto zadenzakje — achterkant
+      ${gewas.fotoAchter ? `<img src="${gewas.fotoAchter}" class="form-foto" alt="achterkant zadenzakje">` : ""}
+      <input type="file" accept="image/*" id="foto-achter-bestand">
+      ${gewas.fotoAchter ? `<span class="verwijder-check"><input type="checkbox" name="verwijderFotoAchter" style="width:auto"> huidige foto verwijderen</span>` : ""}
+    </label>`;
 }
 
 // ---------- TAKEN ----------
@@ -468,6 +514,19 @@ document.getElementById("datum-vandaag").textContent =
 document.getElementById("inhoud").addEventListener("click", e => {
   const d = e.target.dataset;
 
+  const fotoKlik = e.target.closest("[data-foto]");
+  if (fotoKlik) {
+    const [gewasId, kant] = fotoKlik.dataset.foto.split("|");
+    const g = data.gewassen.find(x => x.id === gewasId);
+    const src = kant === "voor" ? g.fotoVoor : g.fotoAchter;
+    const lb = document.createElement("div");
+    lb.id = "lightbox";
+    lb.innerHTML = `<img src="${src}" alt="zadenzakje ${kant}">`;
+    lb.onclick = () => lb.remove();
+    document.body.appendChild(lb);
+    return;
+  }
+
   if (d.ga) return gaNaar(d.ga);
 
   if (d.afvink !== undefined || e.target.matches('input[data-afvink]')) return; // via change-event
@@ -493,11 +552,14 @@ document.getElementById("inhoud").addEventListener("click", e => {
   }
 
   if (d.nieuwGewas !== undefined) {
-    return openModal("Nieuw gewas", gewasFormulier(), w => {
+    return openModal("Nieuw gewas", gewasFormulier(), async w => {
+      const fotoVoor = await leesAfbeelding(document.getElementById("foto-voor-bestand").files[0]);
+      const fotoAchter = await leesAfbeelding(document.getElementById("foto-achter-bestand").files[0]);
       data.gewassen.push({
         id: uid(), naam: w.naam, ras: w.ras, perkId: w.perkId || null,
         zaaidatum: w.zaaidatum || null, oogstDatum: w.oogstDatum || null,
         status: w.status, opmerking: w.opmerking,
+        fotoVoor: fotoVoor || null, fotoAchter: fotoAchter || null,
         jaar: new Date().getFullYear()
       });
       bewaar(); render(); toast("Gewas toegevoegd");
@@ -505,11 +567,15 @@ document.getElementById("inhoud").addEventListener("click", e => {
   }
   if (d.bewerkGewas) {
     const g = data.gewassen.find(x => x.id === d.bewerkGewas);
-    return openModal("Gewas bewerken", gewasFormulier(g), w => {
+    return openModal("Gewas bewerken", gewasFormulier(g), async w => {
+      const fotoVoor = await leesAfbeelding(document.getElementById("foto-voor-bestand").files[0]);
+      const fotoAchter = await leesAfbeelding(document.getElementById("foto-achter-bestand").files[0]);
       Object.assign(g, {
         naam: w.naam, ras: w.ras, perkId: w.perkId || null,
         zaaidatum: w.zaaidatum || null, oogstDatum: w.oogstDatum || null,
-        status: w.status, opmerking: w.opmerking
+        status: w.status, opmerking: w.opmerking,
+        fotoVoor: w.verwijderFotoVoor ? null : (fotoVoor || g.fotoVoor || null),
+        fotoAchter: w.verwijderFotoAchter ? null : (fotoAchter || g.fotoAchter || null)
       });
       bewaar(); render(); toast("Gewas bijgewerkt");
     });
