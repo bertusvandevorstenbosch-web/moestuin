@@ -2,42 +2,41 @@
 <html lang="nl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
-  <meta name="theme-color" content="#2e7d32">
-  <link rel="manifest" href="manifest.webmanifest">
-  <link rel="icon" href="icons/icon-192.png">
-  <link rel="apple-touch-icon" href="icons/icon-192.png">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Cruquius Crafts">
-  <title>Cruquius Crafts — Moestuin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#3d5a3d">
+  <meta name="description" content="Cruquius Crafts — urban boerderij in Cruquius. Handgemaakt ceramiek van Anna, seizoensproducten uit onze moestuin, en workshops.">
+  <title>Cruquius Crafts — Urban boerderij</title>
+  <meta property="og:title" content="Cruquius Crafts — Urban boerderij">
+  <meta property="og:description" content="Handgemaakt ceramiek, seizoensproducten uit onze moestuin en workshops in Cruquius.">
+  <meta property="og:image" content="images/banner.png">
   <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="images/logo.svg" type="image/svg+xml">
 </head>
 <body>
-  <header class="topbar">
-    <h1>🌱 Cruquius Crafts</h1>
-    <span id="datum-vandaag" class="datum"></span>
+  <header class="site-header">
+    <a href="#/" class="logo">
+      <img src="images/logo.svg" alt="" class="logo-img">
+      <span>Cruquius <em>Crafts</em></span>
+    </a>
+    <nav class="site-nav" id="nav">
+      <a href="#/">Home</a>
+      <a href="#/winkel">Winkel</a>
+      <a href="#/workshops">Workshops</a>
+      <a href="#/blog">Blog</a>
+      <a href="#/over">Over ons</a>
+    </nav>
   </header>
 
-  <nav class="tabs" id="tabs">
-    <button data-tab="start" class="active">Start</button>
-    <button data-tab="perken">Perken</button>
-    <button data-tab="planner">Planner</button>
-    <button data-tab="gewassen">Gewassen</button>
-    <button data-tab="taken">Taken</button>
-    <button data-tab="logboek">Logboek</button>
-    <button data-tab="kalender">Kalender</button>
-    <button data-tab="buren">Buren</button>
-    <button data-tab="plagen">Plagen</button>
-    <button data-tab="bewaren">Bewaren</button>
-    <button data-tab="meer">Meer</button>
-  </nav>
+  <main id="app"></main>
 
-  <main id="inhoud"></main>
-
-  <dialog id="modal"></dialog>
-
-  <div id="toast" class="toast"></div>
+  <footer class="site-footer">
+    <div>
+      <strong>Cruquius Crafts</strong> — urban boerderij in Cruquius<br>
+      <a href="https://github.com/bertusvandevorstenbosch-web/moestuin">Onze moestuin-app</a> ·
+      <a href="#/contact">Contact</a>
+    </div>
+    <div class="footer-tag">Handgemaakt · Seizoensgebonden · Lokaal</div>
+  </footer>
 
   <script src="js/data.js"></script>
   <script src="js/app.js"></script>
