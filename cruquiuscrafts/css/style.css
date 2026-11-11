@@ -64,6 +64,17 @@ a { color: var(--groen); }
 
 main { max-width: 960px; margin: 0 auto; padding: 24px 18px 60px; }
 
+/* banner */
+.banner-sectie { margin-bottom: 28px; }
+.banner {
+  width: 100%;
+  display: block;
+  border-radius: 16px;
+  border: 1px solid var(--rand);
+  box-shadow: 0 2px 10px rgba(44,62,44,0.08);
+}
+.banner-sectie .hero-knoppen { margin-top: 16px; }
+
 /* hero */
 .hero {
   background: linear-gradient(rgba(44,62,44,0.82), rgba(44,62,44,0.82)), repeating-linear-gradient(45deg, #3d5a3d 0 14px, #446544 14px 28px);
