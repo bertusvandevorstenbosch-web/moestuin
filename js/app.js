@@ -495,6 +495,8 @@ views.kalender = function () {
 // ---------- PLANNER ----------
 let plannerPerk = "";
 let plannerGewas = "";
+let plannerAfstand = 0;
+let plannerVerspringend = false;
 let plannerResultaat = null;
 
 views.planner = function () {
@@ -513,9 +515,12 @@ views.planner = function () {
         <h2>Resultaat</h2>
         <p style="font-size:0.9rem; margin-bottom:8px;">
           <strong>${escape(r.perk.naam)}</strong> (${r.perk.breedte} × ${r.perk.lengte} cm) met
-          <strong>${escape(plannerGewas)}</strong> op ${r.afstand} cm afstand:</p>
+          <strong>${escape(plannerGewas)}</strong> op ${r.afstand} cm afstand${r.verspringend ? " (verspringend)" : ""}:</p>
         <p style="font-size:1.05rem; margin-bottom:10px;">→ ${r.totaal} planten (${r.perRij} per rij × ${r.rijen} rijen)</p>
-        ${r.visueel ? `<pre class="bed-schema">${r.visueel}</pre>` : ""}
+        ${r.svg}
+        <p style="font-size:0.78rem; color:var(--grijs); margin-top:4px;">
+          Raster = 10 cm · <span style="color:#2e7d32;">●</span> ${escape(plannerGewas)} ·
+          <span style="color:#ef6c00;">●</span> tussenteelt</p>
         ${suggesties ? `<h3 style="margin-top:10px;">Tussenteelt (companion planting)</h3>
           <ul class="tussenteelt">${suggesties}</ul>
           <p style="font-size:0.78rem; color:var(--grijs); margin-top:6px;">
@@ -537,23 +542,40 @@ views.planner = function () {
       ).join("")}</select></label>
       <label class="veld">Hoofdgewas<input id="planner-gewas" list="gewas-afstanden" value="${escape(plannerGewas)}" placeholder="bijv. tomaat">
         <datalist id="gewas-afstanden">${datalist}</datalist></label>
+      <label class="veld">Plantafstand (cm) — optioneel aanpassen<input type="number" id="planner-afstand" min="5" value="${plannerAfstand || ""}" placeholder="standaard: ${plannerGewas ? plantAfstand(plannerGewas) : "per gewas"} cm"></label>
+      <label class="veld verwijder-check" style="font-weight:600;">
+        <input type="checkbox" id="planner-verspringend" ${plannerVerspringend ? "checked" : ""} style="width:auto">
+        Verspringend (dambord) planten — past meer in
+      </label>
       <button class="knop" data-plan>Berekenen</button>`
       : '<div class="leeg">Nog geen bedden met afmetingen. Ga naar Perken → Bewerk en vul breedte en lengte in cm in.</div>'}
     </div>
     ${resultaatHtml}`;
 };
 
-function berekenPlanner(perk, gewasNaam) {
-  const afstand = plantAfstand(gewasNaam);
+function berekenPlanner(perk, gewasNaam, afstandOverride, verspringend) {
+  const afstand = afstandOverride > 0 ? afstandOverride : plantAfstand(gewasNaam);
+  const rijAfstand = verspringend ? Math.round(afstand * 0.87) : afstand;
+  const rijen = Math.max(1, Math.floor(perk.lengte / rijAfstand));
   const perRij = Math.max(1, Math.floor(perk.breedte / afstand));
-  const rijen = Math.max(1, Math.floor(perk.lengte / afstand));
-  const totaal = perRij * rijen;
+  const perRijVerschoven = Math.max(0, Math.floor((perk.breedte - afstand / 2) / afstand));
+
+  const posities = [];
+  for (let r = 0; r < rijen; r++) {
+    const y = (r + 0.5) * rijAfstand;
+    const verschoven = verspringend && r % 2 === 1;
+    const aantal = verschoven ? perRijVerschoven : perRij;
+    for (let c = 0; c < aantal; c++) {
+      posities.push({ x: afstand / 2 + c * afstand, y });
+    }
+  }
+  const totaal = posities.length;
 
   const suggesties = [];
   const comp = vindCompanions(gewasNaam);
   if (comp) {
     const opp = perk.breedte * perk.lengte;
-    const over = Math.max(0, opp - totaal * afstand * afstand);
+    const over = Math.max(0, opp - totaal * afstand * rijAfstand);
     for (const n of comp.goed) {
       const af = plantAfstand(n);
       if (af >= afstand) continue;
@@ -563,28 +585,63 @@ function berekenPlanner(perk, gewasNaam) {
     suggesties.sort((a, b) => b.n - a.n);
   }
 
-  const letter = (gewasNaam[0] || "?").toUpperCase();
-  const cols = perRij * 2 - 1;
-  const rws = rijen * 2 - 1;
-  let visueel = "";
-  if (cols <= 31 && rws <= 31) {
-    const invullen = suggesties.length ? suggesties.flatMap(s => Array(Math.min(s.n, 12)).fill(s.naam[0])) : [];
-    let idx = 0;
-    const regels = [];
-    for (let r = 0; r < rws; r++) {
-      let regel = "";
-      for (let c = 0; c < cols; c++) {
-        if (r % 2 === 0 && c % 2 === 0) regel += letter;
-        else if (r % 2 === 0 || c % 2 === 0) regel += idx < invullen.length ? invullen[idx++] : "·";
-        else regel += "·";
-      }
-      regels.push(regel);
-    }
-    visueel = regels.join("\n");
+  const svg = tekenBed(perk, posities, afstand, suggesties, gewasNaam);
+  return { perk, afstand, perRij, rijen, totaal, suggesties, svg, verspringend };
+}
+
+function tekenBed(perk, posities, afstand, suggesties, gewasNaam) {
+  const stap = perk.breedte > 500 || perk.lengte > 500 ? 25 : 10;
+  let lijnen = "";
+  for (let x = 0; x <= perk.breedte; x += stap) {
+    lijnen += `<line x1="${x}" y1="0" x2="${x}" y2="${perk.lengte}" stroke="#dde5dd" stroke-width="1"/>`;
+  }
+  for (let y = 0; y <= perk.lengte; y += stap) {
+    lijnen += `<line x1="0" y1="${y}" x2="${perk.breedte}" y2="${y}" stroke="#dde5dd" stroke-width="1"/>`;
   }
 
-  return { perk, afstand, perRij, rijen, totaal, suggesties, visueel };
+  const naamLetter = ((gewasNaam || "?")[0] || "?").toUpperCase();
+  let planten = "";
+  const straal = Math.max(6, afstand * 0.32);
+  for (const p of posities) {
+    planten += `<circle cx="${p.x}" cy="${p.y}" r="${straal}" fill="#2e7d32"/>`;
+    if (afstand >= 30) {
+      planten += `<text x="${p.x}" y="${p.y + straal * 0.35}" text-anchor="middle" font-size="${straal * 1.1}" fill="#fff" font-weight="bold">${naamLetter}</text>`;
+    }
+  }
+
+  let tussenteelt = "";
+  const invullen = suggesties.slice(0, 3).flatMap(s => Array(Math.min(s.n, 40)).fill(s));
+  let idx = 0;
+  for (const p of posities) {
+    const mx = p.x + afstand / 2;
+    if (mx >= perk.breedte - afstand / 4) continue;
+    if (idx >= invullen.length) break;
+    const s = invullen[idx++];
+    const r2 = Math.max(3, s.af * 0.32);
+    tussenteelt += `<circle cx="${mx}" cy="${p.y}" r="${r2}" fill="#ef6c00"/>`;
+  }
+
+  return `<svg class="bed-svg" viewBox="-2 -2 ${perk.breedte + 4} ${perk.lengte + 4}" preserveAspectRatio="xMidYMid meet">
+    <rect x="0" y="0" width="${perk.breedte}" height="${perk.lengte}" fill="#fafcf8" stroke="#795548" stroke-width="3"/>
+    ${lijnen}${planten}${tussenteelt}
+  </svg>`;
 }
+
+// ---------- BEWAREN ----------
+views.bewaren = function () {
+  return `
+    <div class="sectie-kop"><h2>Groenten bewaren</h2></div>
+    <div class="kaart"><p style="font-size:0.85rem; color:var(--grijs); line-height:1.5;">
+      Wat je niet meteen eet, kun je bewaren — vers, ingevroren, ingelegd, gedroogd of gefermenteerd.
+      Per gewas hieronder de methodes en hoe lang ze meegaan.</p></div>
+    ${BEWAREN.map(b => `
+      <div class="kaart plaag">
+        <h3>${escape(b.naam)}</h3>
+        ${b.methodes.map(m => `<p style="margin-top:8px;"><strong>${escape(m.manier)}</strong>
+          <span class="badge groen" style="margin-left:4px;">${escape(m.duur)}</span><br>
+          <span style="font-size:0.85rem;">${escape(m.hoe)}</span></p>`).join("")}
+      </div>`).join("")}`;
+};
 
 // ---------- BUREN (companion planting) ----------
 views.buren = function () {
@@ -689,9 +746,11 @@ document.getElementById("inhoud").addEventListener("click", e => {
   if (d.plan !== undefined) {
     plannerPerk = document.getElementById("planner-perk").value;
     plannerGewas = document.getElementById("planner-gewas").value.trim();
+    plannerAfstand = parseInt(document.getElementById("planner-afstand").value, 10) || 0;
+    plannerVerspringend = document.getElementById("planner-verspringend").checked;
     if (!plannerGewas) return toast("Vul eerst een hoofdgewas in");
     const perk = data.perken.find(p => p.id === plannerPerk);
-    plannerResultaat = perk ? berekenPlanner(perk, plannerGewas) : null;
+    plannerResultaat = perk ? berekenPlanner(perk, plannerGewas, plannerAfstand, plannerVerspringend) : null;
     return render();
   }
 
@@ -908,7 +967,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.3";
+const APP_VERSIE = "1.4";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;
