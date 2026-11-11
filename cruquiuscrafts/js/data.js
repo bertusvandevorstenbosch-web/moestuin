@@ -1,7 +1,7 @@
 // Inhoud van de Cruquius Crafts site. Alles hieraanpassen zonder code-ervaring.
 
 const SITE = {
-  whatsappNummer: "31612345678", // Vervang door jullie echte nummer (landcode zonder + of 0)
+  whatsappNummer: "31615086832",
   email: "hallo@cruquiuscrafts.nl",
   plaats: "Cruquius"
 };

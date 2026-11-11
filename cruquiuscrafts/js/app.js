@@ -65,14 +65,14 @@ views.home = function () {
     <section class="sectie">
       <div class="twee-kolommen">
         <div class="kaart persoon">
-          <div class="avatar">🏺</div>
-          <h3>Anna — ceramiek</h3>
-          <p>Handgedraaid steengoed: mokken, schalen en kommen voor elke dag. Elk stuk uniek, gebakken op hoge temperatuur.</p>
+          <div class="avatar">🪓</div>
+          <h3>Bert — hout &amp; keuken</h3>
+          <p>Spiegels en snijplanken uit eigen zaagwerk, fermenten, siropen van echte wortels en fruit — tot de pot dicht moet.</p>
         </div>
         <div class="kaart persoon">
-          <div class="avatar">🍅</div>
-          <h3>Koken uit de tuin</h3>
-          <p>Sauzen, kruidenzout en seizoensproducten — gemaakt van wat de moestuin geeft, in kleine batches.</p>
+          <div class="avatar">🏺</div>
+          <h3>Anna — keramiek</h3>
+          <p>Handgedraaide mokken en schaaltjes waar je liever uit drinkt dan uit je gewone servies. Elk stuk uniek.</p>
         </div>
       </div>
     </section>
@@ -153,14 +153,20 @@ views.over = function () {
   return `
     <div class="sectie-kop"><h2>Over ons</h2></div>
     <div class="artikel">
-      <p>Cruquius Crafts is een urban boerderij in ${SITE.plaats}. Op een gewone wijk-tuin
-      groeit meer dan je denkt: een kas vol tomaten, vier verhoogde bedden, en een keuken
-      waar alles terechtkomt.</p>
-      <p>Anna is de handen achter het ceramiek: alles wordt zelf gedraaid en gebakken,
-      in kleine series en eenmalige stukken. De moestuin levert de rest — en wat we niet
-      vers eten, wordt saus, kruidenzout of iets anders lekkers.</p>
-      <p>We geloven in seizoensgebonden werken, eerlijke prijzen voor handwerk,
-      en dat goed eten op goed servies hoort.</p>
+      <p>Hoi, wij zijn <strong>Bert en Anna</strong>! We wonen in De Cruquius, in de schaduw
+      van het gemaal, en we kunnen niet stilzitten.</p>
+      <p>Wat we ook doen, het draait om hetzelfde: <strong>dingen zelf maken</strong>.
+      Bert zaagt, freest en lijmt hout tot spiegels en snijplanken, en fermenteert van alles
+      tot Anna zegt dat de pot dicht moet. Hij trekt ook siropen van echte wortels en fruit,
+      maar dat is er maar één van. Anna draait keramiek: mokken en schaaltjes waar je
+      liever uit drinkt dan uit je gewone servies.</p>
+      <p>Veel komt van ons eigen erf. De rest halen we zo dichtbij en eerlijk mogelijk.
+      Geen troep, wel voldoening.</p>
+      <p>Op deze site laten we zien wat we maken en hoe. Soms lukt het in één keer,
+      soms niet, en dat vertellen we dan ook. Wil je weten wat we nu onder handen hebben?
+      Blijf gerust rondkijken.</p>
+      <p class="slotzin"><em>We maken alleen wat we leuk vinden, dus soms is iets op.
+      Dat is geen foutje, dat is de bedoeling.</em></p>
       <div class="contact-blok">
         <strong>Vragen of iets bestellen?</strong><br>
         Stuur een bericht via <a target="_blank" rel="noopener" href="${whatsappLink("Hallo Cruquius Crafts!")}">WhatsApp</a>
