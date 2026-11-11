@@ -259,9 +259,10 @@ views.perken = function () {
         <div class="item">
           <div class="info">
             <div class="titel">${escape(p.naam)}</div>
-            <div class="sub">${gewassen.length ? gewassen.map(g => escape(g.naam)).join(", ") : "leeg"}${p.opmerking ? " · " + escape(p.opmerking) : ""}</div>
+            <div class="sub">${gewassen.length ? gewassen.map(g => escape(g.naam)).join(", ") : "leeg"}${p.breedte && p.lengte ? " · " + p.breedte + "×" + p.lengte + " cm" : ""}${p.opmerking ? " · " + escape(p.opmerking) : ""}</div>
           </div>
           <div class="acties">
+            ${p.breedte && p.lengte ? `<button class="knop klein secundair" data-plan-perk="${p.id}">Plan</button>` : ""}
             <button class="knop klein secundair" data-bewerk-perk="${p.id}">Bewerk</button>
             <button class="knop klein gevaar" data-verwijder-perk="${p.id}">×</button>
           </div>
@@ -280,6 +281,10 @@ function perkFormulier(perk) {
   perk = perk || {};
   return `
     <label class="veld">Naam<input name="naam" required value="${escape(perk.naam || "")}" placeholder="bijv. Perk 1"></label>
+    <div class="form-rij">
+      <label class="veld">Breedte (cm)<input type="number" name="breedte" min="0" value="${perk.breedte || ""}" placeholder="bijv. 120"></label>
+      <label class="veld">Lengte (cm)<input type="number" name="lengte" min="0" value="${perk.lengte || ""}" placeholder="bijv. 240"></label>
+    </div>
     <label class="veld">Opmerking (optioneel)<input name="opmerking" value="${escape(perk.opmerking || "")}" placeholder="bijv. zandgrond, halfdag zon"></label>`;
 }
 
@@ -487,6 +492,100 @@ views.kalender = function () {
       kan alles een paar weken verschuiven.</p></div>`;
 };
 
+// ---------- PLANNER ----------
+let plannerPerk = "";
+let plannerGewas = "";
+let plannerResultaat = null;
+
+views.planner = function () {
+  const perkenMetMaat = data.perken.filter(p => p.breedte && p.lengte);
+  const datalist = Object.keys(PLANTAFSTAND)
+    .map(k => `<option value="${escape(k)}">`).join("");
+
+  let resultaatHtml = "";
+  if (plannerResultaat) {
+    const r = plannerResultaat;
+    const suggesties = r.suggesties.map(s =>
+      `<li><strong>${escape(s.naam)}</strong> (afstand ${s.af} cm) — ${s.n}× er tussen</li>`
+    ).join("");
+    resultaatHtml = `
+      <div class="kaart">
+        <h2>Resultaat</h2>
+        <p style="font-size:0.9rem; margin-bottom:8px;">
+          <strong>${escape(r.perk.naam)}</strong> (${r.perk.breedte} × ${r.perk.lengte} cm) met
+          <strong>${escape(plannerGewas)}</strong> op ${r.afstand} cm afstand:</p>
+        <p style="font-size:1.05rem; margin-bottom:10px;">→ ${r.totaal} planten (${r.perRij} per rij × ${r.rijen} rijen)</p>
+        ${r.visueel ? `<pre class="bed-schema">${r.visueel}</pre>` : ""}
+        ${suggesties ? `<h3 style="margin-top:10px;">Tussenteelt (companion planting)</h3>
+          <ul class="tussenteelt">${suggesties}</ul>
+          <p style="font-size:0.78rem; color:var(--grijs); margin-top:6px;">
+            Schatting op basis van de overgebleven oppervlakte; zet kleinere gewassen tussen de rijen of verspringend.</p>`
+          : `<p style="font-size:0.85rem; color:var(--grijs); margin-top:6px;">Geen kleinere companion-gewassen bekend voor tussenteelt.</p>`}
+      </div>`;
+  }
+
+  return `
+    <div class="sectie-kop"><h2>Perk-planner</h2></div>
+    <div class="kaart">
+      <p style="font-size:0.85rem; color:var(--grijs); margin-bottom:10px; line-height:1.5;">
+        Bereken hoeveel planten er in een bed passen — en wat je als tussenteelt
+        in de lege ruimte kwijt kunt (bijv. wortel en basilicum onder tomaten).
+        Geef je bedden afmetingen via Perken → Bewerk.</p>
+      ${perkenMetMaat.length ? `
+      <label class="veld">Bed<select id="planner-perk">${perkenMetMaat.map(p =>
+        `<option value="${p.id}" ${p.id === plannerPerk ? "selected" : ""}>${escape(p.naam)} (${p.breedte} × ${p.lengte} cm)</option>`
+      ).join("")}</select></label>
+      <label class="veld">Hoofdgewas<input id="planner-gewas" list="gewas-afstanden" value="${escape(plannerGewas)}" placeholder="bijv. tomaat">
+        <datalist id="gewas-afstanden">${datalist}</datalist></label>
+      <button class="knop" data-plan>Berekenen</button>`
+      : '<div class="leeg">Nog geen bedden met afmetingen. Ga naar Perken → Bewerk en vul breedte en lengte in cm in.</div>'}
+    </div>
+    ${resultaatHtml}`;
+};
+
+function berekenPlanner(perk, gewasNaam) {
+  const afstand = plantAfstand(gewasNaam);
+  const perRij = Math.max(1, Math.floor(perk.breedte / afstand));
+  const rijen = Math.max(1, Math.floor(perk.lengte / afstand));
+  const totaal = perRij * rijen;
+
+  const suggesties = [];
+  const comp = vindCompanions(gewasNaam);
+  if (comp) {
+    const opp = perk.breedte * perk.lengte;
+    const over = Math.max(0, opp - totaal * afstand * afstand);
+    for (const n of comp.goed) {
+      const af = plantAfstand(n);
+      if (af >= afstand) continue;
+      const aantal = Math.floor(over / (af * af));
+      if (aantal > 0) suggesties.push({ naam: n, af, n: aantal });
+    }
+    suggesties.sort((a, b) => b.n - a.n);
+  }
+
+  const letter = (gewasNaam[0] || "?").toUpperCase();
+  const cols = perRij * 2 - 1;
+  const rws = rijen * 2 - 1;
+  let visueel = "";
+  if (cols <= 31 && rws <= 31) {
+    const invullen = suggesties.length ? suggesties.flatMap(s => Array(Math.min(s.n, 12)).fill(s.naam[0])) : [];
+    let idx = 0;
+    const regels = [];
+    for (let r = 0; r < rws; r++) {
+      let regel = "";
+      for (let c = 0; c < cols; c++) {
+        if (r % 2 === 0 && c % 2 === 0) regel += letter;
+        else if (r % 2 === 0 || c % 2 === 0) regel += idx < invullen.length ? invullen[idx++] : "·";
+        else regel += "·";
+      }
+      regels.push(regel);
+    }
+    visueel = regels.join("\n");
+  }
+
+  return { perk, afstand, perRij, rijen, totaal, suggesties, visueel };
+}
+
 // ---------- BUREN (companion planting) ----------
 views.buren = function () {
   const kaart = (sleutel, info) => `
@@ -587,20 +686,43 @@ document.getElementById("inhoud").addEventListener("click", e => {
     return;
   }
 
+  if (d.plan !== undefined) {
+    plannerPerk = document.getElementById("planner-perk").value;
+    plannerGewas = document.getElementById("planner-gewas").value.trim();
+    if (!plannerGewas) return toast("Vul eerst een hoofdgewas in");
+    const perk = data.perken.find(p => p.id === plannerPerk);
+    plannerResultaat = perk ? berekenPlanner(perk, plannerGewas) : null;
+    return render();
+  }
+
+  if (d.planPerk) {
+    plannerPerk = d.planPerk;
+    plannerResultaat = null;
+    return gaNaar("planner");
+  }
+
   if (d.ga) return gaNaar(d.ga);
 
   if (d.afvink !== undefined || e.target.matches('input[data-afvink]')) return; // via change-event
 
   if (d.nieuwPerk !== undefined || d.nieuwPerk === "") {
     return openModal("Nieuw perk", perkFormulier(), w => {
-      data.perken.push({ id: uid(), naam: w.naam, opmerking: w.opmerking });
+      data.perken.push({
+        id: uid(), naam: w.naam, opmerking: w.opmerking,
+        breedte: parseInt(w.breedte, 10) || null,
+        lengte: parseInt(w.lengte, 10) || null
+      });
       bewaar(); render(); toast("Perk toegevoegd");
     });
   }
   if (d.bewerkPerk) {
     const perk = data.perken.find(p => p.id === d.bewerkPerk);
     return openModal("Perk bewerken", perkFormulier(perk), w => {
-      Object.assign(perk, { naam: w.naam, opmerking: w.opmerking });
+      Object.assign(perk, {
+        naam: w.naam, opmerking: w.opmerking,
+        breedte: parseInt(w.breedte, 10) || null,
+        lengte: parseInt(w.lengte, 10) || null
+      });
       bewaar(); render(); toast("Perk bijgewerkt");
     });
   }
@@ -786,7 +908,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.2";
+const APP_VERSIE = "1.3";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;

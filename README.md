@@ -5,7 +5,8 @@ en je gegevens blijven op je eigen apparaat.
 
 ## Wat kan de app?
 
-- **Perken** — verdeel je tuin in perken/vakken en zie wat waar staat
+- **Perken** — verdeel je tuin in perken/vakken (met afmetingen in cm) en zie wat waar staat
+- **Perk-planner** — bereken hoeveel planten er in een bed passen én welke tussenteelt (companion planting) in de lege ruimte past, met visueel bed-schema
 - **Gewassen** — met ras, zaaidatum, oogstdatum, status en foto's van het zadenzakje (voor- en achterkant)
 - **Taken** — terugkerende klussen (watergeven, wieden, bemesten) met herinnering wat er te laat is; bij een nieuw gewas worden automatisch standaardtaken aangemaakt
 - **Oogstregistratie** — registreer elke oogst (stuks, kg, gram, bossen, kisten); de app telt per gewas automatisch op tot een seizoentotaal

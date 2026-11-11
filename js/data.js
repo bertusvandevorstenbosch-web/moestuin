@@ -215,3 +215,27 @@ function vindCompanions(naam) {
   }
   return null;
 }
+
+// Plantafstanden in cm (ruim genomen, voor moestuin op ruggen/bedden).
+const PLANTAFSTAND = {
+  "tomaat": 50, "paprika": 40, "aubergine": 50, "peper": 40,
+  "kool": 50, "broccoli": 50, "bloemkool": 50, "spruit": 60, "paksoi": 30,
+  "koolrabi": 30, "radijs": 5, "rucola": 15,
+  "boon": 12, "erwt": 6, "tuinboon": 20,
+  "komkommer": 50, "courgette": 90, "pompoen": 120, "meloen": 60,
+  "sla": 25, "andijvie": 30, "witlof": 30,
+  "ui": 10, "knoflook": 10, "prei": 15, "sjalot": 10,
+  "wortel": 5, "pastinaak": 10, "venkel": 25,
+  "biet": 10, "spinazie": 12, "snijbiet": 30,
+  "aardappel": 35, "aardbei": 30, "mais": 35,
+  "basilicum": 25, "dille": 25, "peterselie": 15, "selderij": 30, "munt": 30,
+  "kamille": 20, "bernagie": 30, "afrikaantje": 20
+};
+
+function plantAfstand(naam) {
+  const n = (naam || "").toLowerCase();
+  for (const [sleutel, cm] of Object.entries(PLANTAFSTAND)) {
+    if (n.includes(sleutel)) return cm;
+  }
+  return 25;
+}
