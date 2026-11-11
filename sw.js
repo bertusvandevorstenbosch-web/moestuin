@@ -1,5 +1,5 @@
 // Service worker: cached de app-bestanden zodat de app offline werkt.
-const CACHE_NAAM = "cruquius-crafts-v10";
+const CACHE_NAAM = "moestuin-app-v11";
 const BESTANDEN = [
   "./",
   "./index.html",
@@ -27,6 +27,7 @@ self.addEventListener("activate", e => {
 
 self.addEventListener("fetch", e => {
   if (e.request.method !== "GET") return;
+  if (e.request.url.includes("/cruquiuscrafts/")) return; // aparte site: niet cachen, niet onderscheppen
   e.respondWith(
     fetch(e.request)
       .then(resp => {
