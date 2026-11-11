@@ -482,7 +482,8 @@ views.meer = function () {
     <div class="kaart">
       <h2>Alles wissen</h2>
       <button class="knop gevaar" data-wis-alles>Alle gegevens wissen</button>
-    </div>`;
+    </div>
+    <p style="text-align:center; font-size:0.75rem; color:var(--grijs);">Moestuin-app versie ${APP_VERSIE}</p>`;
 };
 
 // ============================================================
@@ -701,9 +702,16 @@ document.addEventListener("change", e => {
   lezer.readAsText(bestand);
 });
 
-// service worker registreren (offline gebruik)
+// service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
+const APP_VERSIE = "1.1";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
+  let reedsHerladen = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reedsHerladen) return;
+    reedsHerladen = true;
+    location.reload();
+  });
 }
 
 render();
