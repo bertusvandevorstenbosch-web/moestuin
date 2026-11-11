@@ -240,6 +240,10 @@ views.gewassen = function () {
   const lijst = data.gewassen.slice().sort((a, b) => (b.jaar || 0) - (a.jaar || 0)).map(g => {
     const familie = gewasFamilie(g.naam);
     const statusKleur = g.status === "klaar" ? "groen" : g.status === "oogsten" ? "oranje" : "groen";
+    const comp = vindCompanions(g.naam);
+    const compRegel = comp
+      ? `<div class="sub" style="margin-top:6px;"><span style="color:var(--groen);">✓ goed bij:</span> ${comp.goed.map(escape).join(", ") || "—"}<br><span style="color:var(--rood);">✗ vermijd:</span> ${comp.slecht.map(escape).join(", ")}</div>`
+      : "";
     return `
       <div class="kaart">
         <div class="item">
@@ -250,6 +254,7 @@ views.gewassen = function () {
           </div>
           <span class="badge ${statusKleur}">${escape(g.status)}</span>
         </div>
+        ${compRegel}
         <div class="acties" style="justify-content:flex-end; display:flex; gap:6px;">
           <button class="knop klein secundair" data-log-gewas="${g.id}">+ Log</button>
           <button class="knop klein secundair" data-bewerk-gewas="${g.id}">Bewerk</button>
@@ -381,6 +386,22 @@ views.kalender = function () {
     <div class="kaart"><p style="font-size:0.82rem; color:var(--grijs); line-height:1.5;">
       Dit schema is gebaseerd op het gemiddelde Nederlandse klimaat. Pas in jouw regio of bij een kas
       kan alles een paar weken verschuiven.</p></div>`;
+};
+
+// ---------- BUREN (companion planting) ----------
+views.buren = function () {
+  const kaart = (sleutel, info) => `
+    <div class="kaart plaag">
+      <h3>${escape(sleutel)}</h3>
+      ${info.goed.length ? `<p><span style="color:var(--groen); font-weight:600;">✓ Goede buren:</span> ${info.goed.map(escape).join(", ")}</p>` : ""}
+      ${info.slecht.length ? `<p><span style="color:var(--rood); font-weight:600;">✗ Vermijd:</span> ${info.slecht.map(escape).join(", ")}</p>` : ""}
+    </div>`;
+  return `
+    <div class="sectie-kop"><h2>Companion planting</h2></div>
+    <div class="kaart"><p style="font-size:0.85rem; color:var(--grijs); line-height:1.5;">
+      Sommige gewassen versterken elkaar (betere groei, minder plagen), anderen remmen elkaar af.
+      Zet goede buren naast elkaar op hetzelfde perk en houd slechte combinaties uit elkaar.</p></div>
+    ${Object.entries(COMPANION).map(([s, i]) => kaart(s, i)).join("")}`;
 };
 
 // ---------- PLAGEN ----------
