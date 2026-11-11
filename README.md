@@ -1,42 +1,38 @@
-# 🌱 Cruquius Crafts — Moestuin
+# 🌱 Cruquius Crafts
 
-De app van urban boerderij **Cruquius Crafts** om je moestuin bij te houden.
-Installeerbaar op je telefoon (PWA), werkt ook offline, en je gegevens blijven op je eigen apparaat.
+De website van urban boerderij **Cruquius Crafts** (Cruquius): blog, kleine webshop
+(ceramiek + producten uit de moestuin) en workshops.
 
-## Wat kan de app?
+## Online
 
-- **Perken** — verdeel je tuin in perken/vakken (met afmetingen in cm) en zie wat waar staat
-- **Perk-planner** — bereken hoeveel planten er in een bed passen én welke tussenteelt (companion planting) in de lege ruimte past, met visueel bed-schema
-- **Gewassen** — met ras, zaaidatum, oogstdatum, status en foto's van het zadenzakje (voor- en achterkant)
-- **Taken** — terugkerende klussen (watergeven, wieden, bemesten) met herinnering wat er te laat is; bij een nieuw gewas worden automatisch standaardtaken aangemaakt
-- **Oogstregistratie** — registreer elke oogst (stuks, kg, gram, bossen, kisten); de app telt per gewas automatisch op tot een seizoentotaal
-- **Groei-logboek** — notities per gewas: zaai, kieming, oogst, plagen, opmerkingen, eventueel met foto
-- **Zaaischema** — per maand wat je in het Nederlandse klimaat kunt zaaien, planten en oogsten
-- **Vruchtwisseling** — waarschuwing als een gewasfamilie twee jaar achter elkaar op hetzelfde perk staat
-- **Companion planting (buren)** — goede en slechte buurgewassen, ook als hint bij je eigen gewassen
-- **Plagen & ziektes** — naslag met herkenning en biologische aanpak
-- **Back-up** — exporteer/importeer je gegevens als JSON-bestand (bijv. om in Google Drive te bewaren)
+Via GitHub Pages: `https://bertusvandevorstenbosch-web.github.io/moestuin/`
+(later te koppelen aan eigen domein, bijv. cruquiuscrafts.nl)
 
-## Installatie op je telefoon
+## Inhoud beheren (zonder code-ervaring)
 
-1. Zorg dat de app ergens bereikbaar is (zie hieronder).
-2. Open de URL in Chrome (Android) of Safari (iPhone).
-3. Kies in het browsermenu **"Toevoegen aan startscherm"**.
-4. Klaar — de app opent nu als eigen app en werkt ook zonder internet.
+Alle teksten, producten, workshops en blogposts staan in **één bestand**:
+[`js/data.js`](js/data.js). Open het bestand, pas de tekst aan, en sla op —
+de site werkt direct bij.
 
-## De app online zetten (GitHub Pages)
+- **Eigen nummer/e-mail**: pas bovenin `SITE` aan (`whatsappNummer` met landcode, bijv. `31612345678`)
+- **Product toevoegen**: kopieer een blok tussen `{ ... }` in `PRODUCTEN`, verander naam/prijs/beschrijving
+- **Foto's**: zet je foto in de map `images/` en vul de bestandsnaam in bij `afbeelding`
+- **Uitverkocht**: zet `opVoorraad: false`
+- **Blogpost schrijven**: kopieer een blok in `BLOGPOSTS`; tekst mag gewone HTML bevatten (`<p>`, `<h2>`, `<ul>`)
 
-1. Ga in deze repo naar **Settings → Pages**.
-2. Kies bij **Source**: *Deploy from a branch*, kies branch `main`, map `/ (root)`, en klik **Save**.
-3. Na een minuut staat de app op `https://<gebruikersnaam>.github.io/<reponaam>/`.
+## Bestellen
 
-> Let op: GitHub Pages werkt alleen bij **publieke** repos op een gratis account.
-> Wil je de repo privé houden, dan kun je de bestanden ook tijdelijk lokaal serveren
-> (`python3 -m http.server`) en via je wifi-netwerk op de telefoon openen; na installatie
-> werkt de app offline en is de pc niet meer nodig.
+Klanten bestellen via een vooringevuld WhatsApp-bericht (nummer instelbaar in `SITE`).
+Betaling regelen jullie onderling (Tikkie, iDEAL-verzoek, contant bij afhalen).
+
+### Later: echte iDEAL-betalingen
+
+Maak een gratis **Mollie**-account aan, maak per product een betaallink, en zet die
+in het productblok als extra veld (bijv. `betaalLink: "https://mollie.com/..."`).
+De site kan daarmee uitgebreid worden zonder herbouw.
 
 ## Technisch
 
-- Gewone HTML/CSS/JavaScript — geen build-stap, geen dependencies, geen tracking
-- Gegevens in `localStorage` op het apparaat zelf
-- Service worker voor offline gebruik
+- Statische site: HTML/CSS/JavaScript, geen dependencies, geen build-stap, geen tracking
+- Werkt op elke gratis statische host (GitHub Pages, Netlify, Cloudflare Pages)
+- Blog en shop draaien op hash-routering (`#/blog/...`), dus geen server nodig
