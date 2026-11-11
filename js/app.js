@@ -917,7 +917,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
     a.href = URL.createObjectURL(blob);
-    a.download = "moestuin-backup-" + vandaagISO() + ".json";
+    a.download = "cruquius-crafts-backup-" + vandaagISO() + ".json";
     a.click();
     URL.revokeObjectURL(a.href);
     return toast("Back-up gedownload");
@@ -967,7 +967,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.5";
+const APP_VERSIE = "1.6";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;

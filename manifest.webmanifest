@@ -1,7 +1,7 @@
 {
-  "name": "Moestuin",
-  "short_name": "Moestuin",
-  "description": "Houd je moestuin bij: perken, gewassen, taken, logboek en zaaischema.",
+  "name": "Cruquius Crafts — Moestuin",
+  "short_name": "Cruquius Crafts",
+  "description": "De moestuin-app van urban boerderij Cruquius Crafts: perken, gewassen, taken, oogstregistratie, logboek en zaaischema.",
   "lang": "nl",
   "start_url": "./index.html",
   "scope": "./",

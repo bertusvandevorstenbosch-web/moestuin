@@ -1,7 +1,7 @@
-# 🌱 Moestuin
+# 🌱 Cruquius Crafts — Moestuin
 
-Een app om je moestuin bij te houden. Installeerbaar op je telefoon (PWA), werkt ook offline,
-en je gegevens blijven op je eigen apparaat.
+De app van urban boerderij **Cruquius Crafts** om je moestuin bij te houden.
+Installeerbaar op je telefoon (PWA), werkt ook offline, en je gegevens blijven op je eigen apparaat.
 
 ## Wat kan de app?
 
