@@ -2,7 +2,7 @@
 
 const OPSLAGSLEUTEL = "moestuin-data-v1";
 
-const legeData = () => ({ perken: [], gewassen: [], taken: [], logboek: [] });
+const legeData = () => ({ perken: [], gewassen: [], taken: [], logboek: [], oogsten: [] });
 
 let data = laagData();
 
@@ -202,6 +202,41 @@ function toonInstallHint() {
 }
 
 // ---------- PERKEN ----------
+function oogstRegel(g) {
+  const totaal = oogstTotaal(g.id);
+  const telling = data.oogsten.filter(o => o.cropId === g.id).length;
+  return `
+    <div class="sub" style="margin-top:6px;"><strong>🍅 Oogst:</strong>
+      ${totaal || "nog niets geregistreerd"}
+      ${telling ? `<span style="color:var(--grijs);"> (${telling}× geoogst)</span>` : ""}</div>`;
+}
+
+function oogstFormulier(g) {
+  const eenheden = ["stuks", "kg", "gram", "bossen", "kisten"]
+    .map(e => `<option>${e}</option>`).join("");
+  return `
+    <p style="font-size:0.85rem; color:var(--grijs); margin-bottom:10px;">
+      Registratie voor ${escape(g.naam)}${g.ras ? " (" + escape(g.ras) + ")" : ""} — elke oogst wordt bij het gewas opgeteld.</p>
+    <div class="form-rij">
+      <label class="veld">Datum<input type="date" name="datum" required value="${vandaagISO()}"></label>
+      <label class="veld">Hoeveelheid<input type="number" name="hoeveelheid" step="any" min="0" required placeholder="bijv. 1,5"></label>
+      <label class="veld">Eenheid<select name="eenheid">${eenheden}</select></label>
+    </div>
+    <label class="veld">Opmerking (optioneel)<input name="opmerking" placeholder="bijv. eerste oogst, van perk 2"></label>`;
+}
+
+function oogstTotaal(gewasId) {
+  const perEenheid = {};
+  for (const o of data.oogsten) {
+    if (o.cropId !== gewasId) continue;
+    perEenheid[o.eenheid] = (perEenheid[o.eenheid] || 0) + (parseFloat(o.hoeveelheid) || 0);
+  }
+  const delen = Object.entries(perEenheid).map(([e, n]) =>
+    n.toLocaleString("nl-NL", { maximumFractionDigits: 2 }) + " " + e
+  );
+  return delen.join(" · ");
+}
+
 function fotoRij(g) {
   const fotos = [["voor", g.fotoVoor], ["achter", g.fotoAchter]].filter(f => f[1]);
   if (!fotos.length) return "";
@@ -291,7 +326,9 @@ views.gewassen = function () {
         </div>
         ${compRegel}
         ${fotoRij(g)}
+        ${oogstRegel(g)}
         <div class="acties" style="justify-content:flex-end; display:flex; gap:6px;">
+          <button class="knop klein secundair" data-oogst-gewas="${g.id}">+ Oogst</button>
           <button class="knop klein secundair" data-log-gewas="${g.id}">+ Log</button>
           <button class="knop klein secundair" data-bewerk-gewas="${g.id}">Bewerk</button>
           <button class="knop klein gevaar" data-verwijder-gewas="${g.id}">×</button>
@@ -328,7 +365,11 @@ function gewasFormulier(gewas) {
       ${gewas.fotoAchter ? `<img src="${gewas.fotoAchter}" class="form-foto" alt="achterkant zadenzakje">` : ""}
       <input type="file" accept="image/*" id="foto-achter-bestand">
       ${gewas.fotoAchter ? `<span class="verwijder-check"><input type="checkbox" name="verwijderFotoAchter" style="width:auto"> huidige foto verwijderen</span>` : ""}
-    </label>`;
+    </label>
+    ${gewas.id ? "" : `<label class="veld verwijder-check" style="font-weight:600;">
+      <input type="checkbox" name="standaardTaken" checked style="width:auto">
+      Standaardtaken aanmaken (watergeven, wieden, bemesten)
+    </label>`}`;
 }
 
 // ---------- TAKEN ----------
@@ -345,7 +386,7 @@ views.taken = function () {
         <input type="checkbox" data-afvink="${t.id}">
         <div class="info">
           <div class="naam">${escape(t.naam)}</div>
-          <div class="meta">${escape(perkNaam(t.perkId))} · elke ${t.freqDagen} d. · volgende: ${mooieDatum(t.volgendeDatum)}</div>
+          <div class="meta">${escape(perkNaam(t.perkId))}${gewasNaam(t) ? " · " + escape(gewasNaam(t)) : ""} · elke ${t.freqDagen} d. · volgende: ${mooieDatum(t.volgendeDatum)}</div>
         </div>
         ${badge}
         <div class="acties">
@@ -365,11 +406,17 @@ views.taken = function () {
     </div>`;
 };
 
+function gewasNaam(taak) {
+  const g = data.gewassen.find(x => x.id === taak.cropId);
+  return g ? g.naam : "";
+}
+
 function taakFormulier(taak) {
   taak = taak || {};
   return `
     <label class="veld">Taak<input name="naam" required value="${escape(taak.naam || "")}" placeholder="bijv. Watergeven"></label>
     <label class="veld">Perk<select name="perkId"><option value="">— hele tuin —</option>${perkOpties(taak.perkId)}</select></label>
+    <label class="veld">Gewas (optioneel)<select name="cropId"><option value="">— geen —</option>${gewasOpties(taak.cropId)}</select></label>
     <div class="form-rij">
       <label class="veld">Elke … dagen<input type="number" name="freqDagen" min="1" required value="${taak.freqDagen || 2}"></label>
       <label class="veld">Volgende keer<input type="date" name="volgendeDatum" required value="${escape(taak.volgendeDatum || vandaagISO())}"></label>
@@ -384,6 +431,7 @@ views.logboek = function () {
       <div class="log-item">
         <div class="datum-klein">${mooieDatum(l.datum)}${gewas ? " · " + escape(gewas.naam) : ""}</div>
         <span class="type">${escape(l.type)}</span>${escape(l.tekst)}
+        ${l.foto ? `<figure class="foto-thumb" data-foto="log|${l.id}" style="margin-top:8px;"><img src="${l.foto}" alt="logboekfoto"></figure>` : ""}
         <div style="text-align:right"><button class="knop klein gevaar" data-verwijder-log="${l.id}">×</button></div>
       </div>`;
   }).join("");
@@ -404,7 +452,12 @@ function logFormulier(log) {
       <label class="veld">Datum<input type="date" name="datum" required value="${escape(log.datum || vandaagISO())}"></label>
       <label class="veld">Type<select name="type">${types}</select></label>
     </div>
-    <label class="veld">Notitie<textarea name="tekst" required>${escape(log.tekst || "")}</textarea></label>`;
+    <label class="veld">Notitie<textarea name="tekst" required>${escape(log.tekst || "")}</textarea></label>
+    <label class="veld">Foto (optioneel)
+      ${log.foto ? `<img src="${log.foto}" class="form-foto" alt="logboekfoto">` : ""}
+      <input type="file" accept="image/*" id="log-foto-bestand">
+      ${log.foto ? `<span class="verwijder-check"><input type="checkbox" name="verwijderFoto" style="width:auto"> huidige foto verwijderen</span>` : ""}
+    </label>`;
 }
 
 // ---------- KALENDER ----------
@@ -517,9 +570,15 @@ document.getElementById("inhoud").addEventListener("click", e => {
 
   const fotoKlik = e.target.closest("[data-foto]");
   if (fotoKlik) {
-    const [gewasId, kant] = fotoKlik.dataset.foto.split("|");
-    const g = data.gewassen.find(x => x.id === gewasId);
-    const src = kant === "voor" ? g.fotoVoor : g.fotoAchter;
+    const [soort, id, kant] = fotoKlik.dataset.foto.split("|");
+    let src;
+    if (soort === "log") {
+      const l = data.logboek.find(x => x.id === id);
+      src = l && l.foto;
+    } else {
+      const g = data.gewassen.find(x => x.id === soort);
+      src = g && (id === "voor" ? g.fotoVoor : g.fotoAchter);
+    }
     const lb = document.createElement("div");
     lb.id = "lightbox";
     lb.innerHTML = `<img src="${src}" alt="zadenzakje ${kant}">`;
@@ -556,13 +615,23 @@ document.getElementById("inhoud").addEventListener("click", e => {
     return openModal("Nieuw gewas", gewasFormulier(), async w => {
       const fotoVoor = await leesAfbeelding(document.getElementById("foto-voor-bestand").files[0]);
       const fotoAchter = await leesAfbeelding(document.getElementById("foto-achter-bestand").files[0]);
-      data.gewassen.push({
+      const nieuwGewas = {
         id: uid(), naam: w.naam, ras: w.ras, perkId: w.perkId || null,
         zaaidatum: w.zaaidatum || null, oogstDatum: w.oogstDatum || null,
         status: w.status, opmerking: w.opmerking,
         fotoVoor: fotoVoor || null, fotoAchter: fotoAchter || null,
         jaar: new Date().getFullYear()
-      });
+      };
+      data.gewassen.push(nieuwGewas);
+      if (w.standaardTaken) {
+        const start = vandaagISO();
+        for (const s of TAAKSJABLONEN.slice(0, 3)) {
+          data.taken.push({
+            id: uid(), naam: s.naam, perkId: nieuwGewas.perkId,
+            cropId: nieuwGewas.id, freqDagen: s.freqDagen, volgendeDatum: start
+          });
+        }
+      }
       bewaar(); render(); toast("Gewas toegevoegd");
     });
   }
@@ -584,14 +653,27 @@ document.getElementById("inhoud").addEventListener("click", e => {
   if (d.verwijderGewas) {
     return bevestig("Gewas verwijderen? Ook de logboeknotities blijven staan.", () => {
       data.gewassen = data.gewassen.filter(g => g.id !== d.verwijderGewas);
+      data.oogsten = data.oogsten.filter(o => o.cropId !== d.verwijderGewas);
       bewaar(); render(); toast("Gewas verwijderd");
+    });
+  }
+
+  if (d.oogstGewas) {
+    const g = data.gewassen.find(x => x.id === d.oogstGewas);
+    return openModal("Oogst registreren", oogstFormulier(g), w => {
+      data.oogsten.push({
+        id: uid(), cropId: g.id, datum: w.datum,
+        hoeveelheid: parseFloat(w.hoeveelheid) || 0,
+        eenheid: w.eenheid, opmerking: w.opmerking
+      });
+      bewaar(); render(); toast("Oogst geregistreerd 🍅");
     });
   }
 
   if (d.nieuwTaak !== undefined) {
     return openModal("Nieuwe taak", taakFormulier(), w => {
       data.taken.push({
-        id: uid(), naam: w.naam, perkId: w.perkId || null,
+        id: uid(), naam: w.naam, perkId: w.perkId || null, cropId: w.cropId || null,
         freqDagen: Math.max(1, parseInt(w.freqDagen, 10) || 1),
         volgendeDatum: w.volgendeDatum
       });
@@ -602,7 +684,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
     const s = TAAKSJABLONEN[parseInt(d.sjabloon, 10)];
     return openModal("Nieuwe taak: " + s.naam, taakFormulier({ naam: s.naam, freqDagen: s.freqDagen }), w => {
       data.taken.push({
-        id: uid(), naam: w.naam, perkId: w.perkId || null,
+        id: uid(), naam: w.naam, perkId: w.perkId || null, cropId: w.cropId || null,
         freqDagen: Math.max(1, parseInt(w.freqDagen, 10) || 1),
         volgendeDatum: w.volgendeDatum
       });
@@ -613,7 +695,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
     const t = data.taken.find(x => x.id === d.bewerkTaak);
     return openModal("Taak bewerken", taakFormulier(t), w => {
       Object.assign(t, {
-        naam: w.naam, perkId: w.perkId || null,
+        naam: w.naam, perkId: w.perkId || null, cropId: w.cropId || null,
         freqDagen: Math.max(1, parseInt(w.freqDagen, 10) || 1),
         volgendeDatum: w.volgendeDatum
       });
@@ -629,10 +711,11 @@ document.getElementById("inhoud").addEventListener("click", e => {
 
   if (d.nieuwLog !== undefined || d.logGewas) {
     const voorGewas = d.logGewas || "";
-    return openModal("Nieuwe notitie", logFormulier({ cropId: voorGewas }), w => {
+    return openModal("Nieuwe notitie", logFormulier({ cropId: voorGewas }), async w => {
+      const foto = await leesAfbeelding(document.getElementById("log-foto-bestand").files[0]);
       data.logboek.push({
         id: uid(), cropId: w.cropId || null, datum: w.datum,
-        type: w.type, tekst: w.tekst
+        type: w.type, tekst: w.tekst, foto: foto || null
       });
       bewaar(); render(); toast("Notitie toegevoegd");
     });
@@ -703,7 +786,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.1";
+const APP_VERSIE = "1.2";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;
