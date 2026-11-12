@@ -166,22 +166,37 @@ function haalWeer(geforceerd = false) {
     localStorage.setItem(WEER_SLEUTEL, JSON.stringify(nieuw));
     weerInfo = nieuw;
     return nieuw;
-  }).catch(() => null);
+  }).catch(() => { weerInfo = weerInfo || cache || null; return weerInfo; });
 }
+
+let laatsteWeerPoging = 0;
 
 function misschienWeerVerversen() {
   const locatie = leesLocatie();
   let cache = null;
   try { cache = JSON.parse(localStorage.getItem(WEER_SLEUTEL)); } catch {}
-  if (cache && cache.lat === locatie.lat && cache.lon === locatie.lon &&
-      Date.now() - cache.opgehaald < 60 * 60 * 1000) return;
+  const geldig = cache && cache.lat === locatie.lat && cache.lon === locatie.lon;
+  const vers = geldig && Date.now() - cache.opgehaald < 60 * 60 * 1000;
+  if (vers) {
+    if (!weerInfo) { weerInfo = cache; render(); }
+    else weerInfo = cache;
+    return;
+  }
+  if (Date.now() - laatsteWeerPoging < 10 * 60 * 1000) {
+    if (!weerInfo && geldig) { weerInfo = cache; render(); }
+    return;
+  }
+  laatsteWeerPoging = Date.now();
   haalWeer().then(w => { if (w) render(); });
 }
 
 function regenMmOp(iso) {
   if (!weerInfo || !weerInfo.dagen) return null;
   const dag = weerInfo.dagen.find(d => d.datum === iso);
-  return dag ? dag.regenMm : null;
+  if (dag) return dag.regenMm;
+  const verschild = dagenVerschil(iso);
+  if (verschild >= 0 && verschild < weerInfo.dagen.length) return weerInfo.dagen[verschild].regenMm;
+  return null;
 }
 
 function isoOverDagen(n) {
@@ -245,11 +260,14 @@ views.start = function () {
       weerInhoud += `<div class="weer-tip">💡 ${overslaan.map(t => escape(t.naam)).join(", ")} kan waarschijnlijk overslaan${regenDagIso === isoOverDagen(1) ? " (morgen regen)" : ""}</div>`;
     }
   }
+  const weerBron = weerInfo
+    ? `<div class="weer-bron">Open-Meteo · opgehaald ${new Date(weerInfo.opgehaald).toLocaleTimeString("nl-NL", { hour: "numeric", minute: "2-digit" })}</div>`
+    : "";
   const weerKaart = weerInhoud ? `
     <div class="kaart">
       <div class="sectie-kop"><h2>Weer</h2>
         <button class="knop klein secundair" data-zet-locatie>📍 Locatie</button></div>
-      ${weerInhoud}
+      ${weerInhoud}${weerBron}
     </div>` : "";
 
   const perkenOverzicht = data.perken.map(p => {
@@ -1112,7 +1130,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.8";
+const APP_VERSIE = "1.9";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;
