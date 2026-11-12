@@ -131,6 +131,7 @@ main { padding: 14px; max-width: 720px; margin: 0 auto; }
 }
 .badge.rood { background: #ffebee; color: var(--rood); }
 .badge.oranje { background: #fff3e0; color: var(--oranje); }
+.badge.blauw { background: #e3f0fb; color: #2b6cb0; }
 .badge.groen { background: var(--groen-licht); color: var(--groen); }
 
 /* lijst-items */
@@ -179,6 +180,26 @@ main { padding: 14px; max-width: 720px; margin: 0 auto; }
 }
 .perk-chip strong { display: block; color: var(--donker); font-family: system-ui, sans-serif; }
 .perk-chip span { color: var(--grijs); font-size: 0.82rem; }
+
+/* weer-kaart + checkrijen */
+.weer-regel { font-size: 1rem; }
+.weer-tip {
+  margin-top: 8px;
+  background: var(--groen-licht);
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 0.9rem;
+  color: var(--donker);
+}
+.check-rij {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: var(--tekst);
+  margin: 6px 0 0;
+}
+.check-rij input { width: auto; }
 
 /* formulieren */
 label.veld { display: block; margin-bottom: 10px; font-size: 0.85rem; font-weight: 600; }
