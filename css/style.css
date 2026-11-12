@@ -161,6 +161,25 @@ main { padding: 14px; max-width: 720px; margin: 0 auto; }
 .tegel .getal { font-size: 1.5rem; font-weight: 700; color: var(--groen); }
 .tegel .label { font-size: 0.72rem; color: var(--grijs); }
 
+/* snelle acties + perken-chips (start) */
+.snelle-acties { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+.snelle-acties .knop { flex: 1; min-width: 96px; }
+.perk-chip {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: var(--groen-licht);
+  border: 1px solid var(--rand);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 0.9rem;
+}
+.perk-chip strong { display: block; color: var(--donker); font-family: system-ui, sans-serif; }
+.perk-chip span { color: var(--grijs); font-size: 0.82rem; }
+
 /* formulieren */
 label.veld { display: block; margin-bottom: 10px; font-size: 0.85rem; font-weight: 600; }
 label.veld input, label.veld select, label.veld textarea {

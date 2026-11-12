@@ -170,12 +170,32 @@ views.start = function () {
       </div>`;
   };
 
+  const perkenOverzicht = data.perken.map(p => {
+    const gewassen = data.gewassen.filter(g => g.perkId === p.id && g.status !== "klaar");
+    return `<button class="perk-chip" data-ga="perken">
+      <strong>${escape(p.naam)}</strong>
+      <span>${gewassen.length ? gewassen.map(g => escape(g.naam)).join(", ") : "leeg"}</span>
+    </button>`;
+  }).join("");
+
   return `
     ${toonInstallHint()}
     <div class="tegels">
       <div class="tegel"><div class="getal">${achterstall.length}</div><div class="label">taken te laat</div></div>
       <div class="tegel"><div class="getal">${vandaagMorgen.length}</div><div class="label">taken vandaag</div></div>
       <div class="tegel"><div class="getal">${actieveGewassen}</div><div class="label">gewassen actief</div></div>
+    </div>
+
+    <div class="snelle-acties">
+      <button class="knop groen" data-nieuw-taak>+ Taak</button>
+      <button class="knop primair" data-nieuw-oogst>+ Oogst</button>
+      <button class="knop secundair" data-nieuw-log>+ Notitie</button>
+    </div>
+
+    <div class="kaart">
+      <div class="sectie-kop"><h2>Mijn perken</h2>
+        <button class="knop klein secundair" data-ga="perken">Alles bekijken</button></div>
+      ${perkenOverzicht || '<div class="leeg">Nog geen perken. Maak ze aan via het tabblad Perken.</div>'}
     </div>
 
     <div class="kaart">
@@ -214,9 +234,13 @@ function oogstRegel(g) {
 function oogstFormulier(g) {
   const eenheden = ["stuks", "kg", "gram", "bossen", "kisten"]
     .map(e => `<option>${e}</option>`).join("");
+  const gewasKeuze = g ? "" :
+    `<label class="veld">Gewas<select name="gewasId" required>${data.gewassen.filter(x => x.status !== "klaar")
+      .map(x => `<option value="${x.id}">${escape(x.naam)}${x.ras ? " (" + escape(x.ras) + ")" : ""}</option>`).join("")}</select></label>`;
   return `
-    <p style="font-size:0.85rem; color:var(--grijs); margin-bottom:10px;">
-      Registratie voor ${escape(g.naam)}${g.ras ? " (" + escape(g.ras) + ")" : ""} — elke oogst wordt bij het gewas opgeteld.</p>
+    ${g ? `<p style="font-size:0.85rem; color:var(--grijs); margin-bottom:10px;">
+      Registratie voor ${escape(g.naam)}${g.ras ? " (" + escape(g.ras) + ")" : ""} — elke oogst wordt bij het gewas opgeteld.</p>` : ""}
+    ${gewasKeuze}
     <div class="form-rij">
       <label class="veld">Datum<input type="date" name="datum" required value="${vandaagISO()}"></label>
       <label class="veld">Hoeveelheid<input type="number" name="hoeveelheid" step="any" min="0" required placeholder="bijv. 1,5"></label>
@@ -839,6 +863,20 @@ document.getElementById("inhoud").addEventListener("click", e => {
     });
   }
 
+  if (d.nieuwOogst !== undefined) {
+    if (!data.gewassen.some(x => x.status !== "klaar")) return toast("Voeg eerst een gewas toe");
+    return openModal("Oogst registreren", oogstFormulier(null), w => {
+      const g = data.gewassen.find(x => x.id === w.gewasId);
+      if (!g) return;
+      data.oogsten.push({
+        id: uid(), cropId: g.id, datum: w.datum,
+        hoeveelheid: parseFloat(w.hoeveelheid) || 0,
+        eenheid: w.eenheid, opmerking: w.opmerking
+      });
+      bewaar(); render(); toast("Oogst geregistreerd \ud83c\udf45");
+    });
+  }
+
   if (d.oogstGewas) {
     const g = data.gewassen.find(x => x.id === d.oogstGewas);
     return openModal("Oogst registreren", oogstFormulier(g), w => {
@@ -967,7 +1005,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.6";
+const APP_VERSIE = "1.7";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;
