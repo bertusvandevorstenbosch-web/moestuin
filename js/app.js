@@ -138,6 +138,62 @@ function gewasOpties(geselecteerd) {
     .join("");
 }
 
+// ---------- weer (Open-Meteo, gratis, zonder sleutel) ----------
+const LOCATIE_SLEUTEL = "moestuin-locatie";
+const WEER_SLEUTEL = "moestuin-weer-cache";
+const STANDAARD_LOCATIE = { lat: 52.2711, lon: 4.6503 };
+let weerInfo = null;
+
+function leesLocatie() {
+  try { return JSON.parse(localStorage.getItem(LOCATIE_SLEUTEL)) || STANDAARD_LOCATIE; }
+  catch { return STANDAARD_LOCATIE; }
+}
+
+function haalWeer(geforceerd = false) {
+  const locatie = leesLocatie();
+  let cache = null;
+  try { cache = JSON.parse(localStorage.getItem(WEER_SLEUTEL)); } catch {}
+  const vers = cache && cache.lat === locatie.lat && cache.lon === locatie.lon &&
+    Date.now() - cache.opgehaald < 60 * 60 * 1000;
+  if (vers && !geforceerd) { weerInfo = cache; return Promise.resolve(cache); }
+  const url = "https://api.open-meteo.com/v1/forecast?latitude=" + locatie.lat +
+    "&longitude=" + locatie.lon + "&daily=precipitation_sum&timezone=auto&forecast_days=4";
+  return fetch(url).then(r => r.json()).then(j => {
+    const tijd = (j.daily && j.daily.time) || [];
+    const neerslag = (j.daily && j.daily.precipitation_sum) || [];
+    const nieuw = { lat: locatie.lat, lon: locatie.lon, opgehaald: Date.now(),
+      dagen: tijd.map((d, i) => ({ datum: d, regenMm: neerslag[i] || 0 })) };
+    localStorage.setItem(WEER_SLEUTEL, JSON.stringify(nieuw));
+    weerInfo = nieuw;
+    return nieuw;
+  }).catch(() => null);
+}
+
+function misschienWeerVerversen() {
+  const locatie = leesLocatie();
+  let cache = null;
+  try { cache = JSON.parse(localStorage.getItem(WEER_SLEUTEL)); } catch {}
+  if (cache && cache.lat === locatie.lat && cache.lon === locatie.lon &&
+      Date.now() - cache.opgehaald < 60 * 60 * 1000) return;
+  haalWeer().then(w => { if (w) render(); });
+}
+
+function regenMmOp(iso) {
+  if (!weerInfo || !weerInfo.dagen) return null;
+  const dag = weerInfo.dagen.find(d => d.datum === iso);
+  return dag ? dag.regenMm : null;
+}
+
+function isoOverDagen(n) {
+  return new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+}
+
+function perkSoort(perkId) {
+  const p = data.perken.find(x => x.id === perkId);
+  if (!p) return "buiten";
+  return p.soort || (p.naam.toLowerCase().includes("kas") ? "kas" : "buiten");
+}
+
 // ============================================================
 // VIEWS
 // ============================================================
@@ -159,6 +215,8 @@ views.start = function () {
     const label = verschild < 0 ? `${-verschild} d. te laat` : verschild === 0 ? "vandaag" : `over ${verschild} d.`;
     const badge = verschild < 0 ? '<span class="badge rood">te laat</span>'
       : verschild === 0 ? '<span class="badge oranje">vandaag</span>' : "";
+    const regen = t.watertaak && perkSoort(t.perkId) !== "kas" ? regenMmOp(t.volgendeDatum) : null;
+    const regenBadge = regen !== null && regen >= 1 ? '<span class="badge blauw">💧 regen</span>' : "";
     return `
       <div class="taak ${cls}">
         <input type="checkbox" data-afvink="${t.id}">
@@ -166,9 +224,33 @@ views.start = function () {
           <div class="naam">${escape(t.naam)}</div>
           <div class="meta">${escape(perkNaam(t.perkId))} · elke ${t.freqDagen} d. · volgende: ${mooieDatum(t.volgendeDatum)} · ${label}</div>
         </div>
-        ${badge}
+        ${badge}${regenBadge}
       </div>`;
   };
+
+  const mmVandaag = regenMmOp(vandaag);
+  const mmMorgen = regenMmOp(isoOverDagen(1));
+  const fmtMm = mm => mm.toLocaleString("nl-NL", { maximumFractionDigits: 1 }) + " mm";
+  let weerInhoud = "";
+  if (mmVandaag !== null) {
+    weerInhoud += `<div class="weer-regel">${
+      mmVandaag >= 1 ? "💧 Vandaag " + fmtMm(mmVandaag) + " regen verwacht"
+      : mmMorgen >= 1 ? "💧 Morgen " + fmtMm(mmMorgen) + " regen verwacht"
+      : "☀️ Vandaag en morgen geen regen verwacht"}</div>`;
+    const regenDagIso = mmVandaag >= 1 ? vandaag : mmMorgen >= 1 ? isoOverDagen(1) : null;
+    const overslaan = regenDagIso
+      ? taken.filter(t => t.watertaak && perkSoort(t.perkId) !== "kas" && t.volgendeDatum <= regenDagIso)
+      : [];
+    if (overslaan.length) {
+      weerInhoud += `<div class="weer-tip">💡 ${overslaan.map(t => escape(t.naam)).join(", ")} kan waarschijnlijk overslaan${regenDagIso === isoOverDagen(1) ? " (morgen regen)" : ""}</div>`;
+    }
+  }
+  const weerKaart = weerInhoud ? `
+    <div class="kaart">
+      <div class="sectie-kop"><h2>Weer</h2>
+        <button class="knop klein secundair" data-zet-locatie>📍 Locatie</button></div>
+      ${weerInhoud}
+    </div>` : "";
 
   const perkenOverzicht = data.perken.map(p => {
     const gewassen = data.gewassen.filter(g => g.perkId === p.id && g.status !== "klaar");
@@ -191,6 +273,8 @@ views.start = function () {
       <button class="knop primair" data-nieuw-oogst>+ Oogst</button>
       <button class="knop secundair" data-nieuw-log>+ Notitie</button>
     </div>
+
+    ${weerKaart}
 
     <div class="kaart">
       <div class="sectie-kop"><h2>Mijn perken</h2>
@@ -303,8 +387,13 @@ views.perken = function () {
 
 function perkFormulier(perk) {
   perk = perk || {};
+  const soort = perk.soort || (perk.naam && perk.naam.toLowerCase().includes("kas") ? "kas" : "buiten");
   return `
     <label class="veld">Naam<input name="naam" required value="${escape(perk.naam || "")}" placeholder="bijv. Perk 1"></label>
+    <label class="veld">Soort<select name="soort">
+      <option value="buiten" ${soort === "buiten" ? "selected" : ""}>Buiten (regen waarschuwingen aan)</option>
+      <option value="kas" ${soort === "kas" ? "selected" : ""}>Kas / overkapping (geen regen-waarschuwingen)</option>
+    </select></label>
     <div class="form-rij">
       <label class="veld">Breedte (cm)<input type="number" name="breedte" min="0" value="${perk.breedte || ""}" placeholder="bijv. 120"></label>
       <label class="veld">Lengte (cm)<input type="number" name="lengte" min="0" value="${perk.lengte || ""}" placeholder="bijv. 240"></label>
@@ -449,7 +538,9 @@ function taakFormulier(taak) {
     <div class="form-rij">
       <label class="veld">Elke … dagen<input type="number" name="freqDagen" min="1" required value="${taak.freqDagen || 2}"></label>
       <label class="veld">Volgende keer<input type="date" name="volgendeDatum" required value="${escape(taak.volgendeDatum || vandaagISO())}"></label>
-    </div>`;
+    </div>
+    <label class="check-rij"><input type="checkbox" name="watertaak" ${taak.watertaak ? "checked" : ""}>
+      💧 Watertaak (bijv. watergeven — app waarschuwt bij verwachte regen; niet in de kas)</label>`;
 }
 
 // ---------- LOGBOEK ----------
@@ -728,6 +819,7 @@ function render() {
   document.getElementById("inhoud").innerHTML = views[huidigeTab]();
   document.querySelectorAll("#tabs button").forEach(b =>
     b.classList.toggle("active", b.dataset.tab === huidigeTab));
+  if (huidigeTab === "start") misschienWeerVerversen();
 }
 
 function gaNaar(tab) {
@@ -791,7 +883,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
   if (d.nieuwPerk !== undefined || d.nieuwPerk === "") {
     return openModal("Nieuw perk", perkFormulier(), w => {
       data.perken.push({
-        id: uid(), naam: w.naam, opmerking: w.opmerking,
+        id: uid(), naam: w.naam, soort: w.soort || "buiten", opmerking: w.opmerking,
         breedte: parseInt(w.breedte, 10) || null,
         lengte: parseInt(w.lengte, 10) || null
       });
@@ -802,7 +894,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
     const perk = data.perken.find(p => p.id === d.bewerkPerk);
     return openModal("Perk bewerken", perkFormulier(perk), w => {
       Object.assign(perk, {
-        naam: w.naam, opmerking: w.opmerking,
+        naam: w.naam, soort: w.soort || "buiten", opmerking: w.opmerking,
         breedte: parseInt(w.breedte, 10) || null,
         lengte: parseInt(w.lengte, 10) || null
       });
@@ -894,7 +986,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
       data.taken.push({
         id: uid(), naam: w.naam, perkId: w.perkId || null, cropId: w.cropId || null,
         freqDagen: Math.max(1, parseInt(w.freqDagen, 10) || 1),
-        volgendeDatum: w.volgendeDatum
+        volgendeDatum: w.volgendeDatum, watertaak: !!w.watertaak
       });
       bewaar(); render(); toast("Taak toegevoegd");
     });
@@ -916,7 +1008,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
       Object.assign(t, {
         naam: w.naam, perkId: w.perkId || null, cropId: w.cropId || null,
         freqDagen: Math.max(1, parseInt(w.freqDagen, 10) || 1),
-        volgendeDatum: w.volgendeDatum
+        volgendeDatum: w.volgendeDatum, watertaak: !!w.watertaak
       });
       bewaar(); render(); toast("Taak bijgewerkt");
     });
@@ -944,6 +1036,21 @@ document.getElementById("inhoud").addEventListener("click", e => {
       data.logboek = data.logboek.filter(l => l.id !== d.verwijderLog);
       bewaar(); render(); toast("Notitie verwijderd");
     });
+  }
+
+  if (d.zetLocatie !== undefined) {
+    if (!navigator.geolocation) return toast("Locatie niet beschikbaar op dit apparaat");
+    return navigator.geolocation.getCurrentPosition(
+      pos => {
+        const loc = { lat: Math.round(pos.coords.latitude * 10000) / 10000,
+          lon: Math.round(pos.coords.longitude * 10000) / 10000 };
+        try { localStorage.setItem(LOCATIE_SLEUTEL, JSON.stringify(loc)); } catch {}
+        toast("Locatie ingesteld — weer wordt opgehaald…");
+        haalWeer(true).then(w => { if (w) render(); });
+      },
+      () => toast("Locatie geweigerd — standaard Cruquius blijft in gebruik"),
+      { timeout: 10000 }
+    );
   }
 
   if (d.maand) {
@@ -1005,7 +1112,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.7";
+const APP_VERSIE = "1.8";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;
