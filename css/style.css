@@ -191,6 +191,7 @@ main { padding: 14px; max-width: 720px; margin: 0 auto; }
   font-size: 0.9rem;
   color: var(--donker);
 }
+.weer-bron { margin-top: 8px; font-size: 0.72rem; color: var(--grijs); }
 .check-rij {
   display: flex;
   align-items: center;
