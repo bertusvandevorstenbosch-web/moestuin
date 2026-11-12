@@ -1,123 +1,311 @@
-// Inhoud van de Cruquius Crafts site. Alles hieraanpassen zonder code-ervaring.
+// Vaste naslagdata voor de Moestuin-app (Nederlands klimaat).
 
-const SITE = {
-  whatsappNummer: "31615086832",
-  email: "hallo@cruquiuscrafts.nl",
-  plaats: "Cruquius"
+const GEWASFAMILIES = {
+  "nachtschade": ["tomaat", "aardappel", "paprika", "aubergine", "peper"],
+  "kruisbloemigen": ["kool", "broccoli", "bloemkool", "radijs", "rucola", "paksoi", "koolrabi", "spruitjes"],
+  "vlinderbloemigen": ["boon", "bone", "erwt", "erwtje", "kapucijner", "tuinboon", "snijboon", "prinsessenboon"],
+  "cucurbitaceae": ["komkommer", "courgette", "pompoen", "meloen", "kalebas"],
+  "composieten": ["sla", "andijvie", "witlof", "artisjok", "zonnebloem", "endive"],
+  "leliefamilie": ["ui", "uitje", "knoflook", "prei", "sjalot", "bieslook"],
+  "wortelfamilie": ["wortel", "peen", "pastinaak", "venkel", "peterselie", "karwij"],
+  "bietfamilie": ["biet", "rode biet", "spinazie", "snijbiet", "mangold", "wortelraap"],
+  "grassen": ["mais", "tarwe", "gerst"],
+  "overig": []
 };
 
-const PRODUCTEN = [
+function gewasFamilie(naam) {
+  const n = naam.toLowerCase();
+  for (const [familie, leden] of Object.entries(GEWASFAMILIES)) {
+    if (familie === "overig") continue;
+    for (const lid of leden) {
+      if (n.includes(lid)) return familie;
+    }
+  }
+  return "overig";
+}
+
+const MAANDNAMEN = [
+  "januari", "februari", "maart", "april", "mei", "juni",
+  "juli", "augustus", "september", "oktober", "november", "december"
+];
+
+// Zaaischema per maand (gemiddeld Nederlands klimaat).
+const ZAAISCHEMA = {
+  1:  { zaai: [], plant: ["stokuien (onder glas)"], oogst: ["winterpostelein", "andijvie (dekfol)"] },
+  2:  { zaai: ["pepers", "paprika's", "aubergines (binnen)", "tomaten (binnen, late maand)"], plant: [], oogst: ["wintergroenten", "peterselie"] },
+  3:  { zaai: ["erwten", "wortels", "radijs", "spinazie", "sla (onder glas)", "stokbonen (onder glas)"], plant: ["aardappelen (vroeg)", "uitjes", "sjalotten"], oogst: ["spruitjes", "winterkool", "prei"] },
+  4:  { zaai: ["wortels", "radijs", "sla", "bieten", "erwten", "koolsoorten", "snijbiet"], plant: ["aardappelen", "uienzetten"], oogst: ["radijs", "spinazie", "lente-uitjes"] },
+  5:  { zaai: ["bonen", "maïs", "komkommers (buiten, late maand)", "courgettes", "sla (om de paar weken)"], plant: ["tomaten (buiten, na ijsheiligen)", "paprika", "komkommer"], oogst: ["radijs", "sla", "vroege aardappelen (late maand)"] },
+  6:  { zaai: ["bonen", "sla", "wortels (late maand)", "radijs", "andijvie"], plant: ["pompoenen", "koolsoorten", "prei"], oogst: ["sla", "radijs", "eerste courgettes", "doperwten"] },
+  7:  { zaai: ["sla (zomersla)", "andijvie", "spinazie (late maand)", "radijs", "herfstbieten"], plant: ["herfstprei"], oogst: ["tomaten", "courgettes", "bonen", "komkommers", "aardappelen"] },
+  8:  { zaai: ["spinazie", "winterpostelein", "sla (onder glas)", "rammenas", "winteruitjes"], plant: [], oogst: ["tomaten", "paprika", "courgettes", "pompoenen (late maand)", "bieten", "prei"] },
+  9:  { zaai: ["winterradijs", "sla (late maand)", "spinazie"], plant: ["aardbeien (nieuwe planten)", "winterprei"], oogst: ["pompoenen", "tomaten", "bonen", "koolrabi", "maïs"] },
+  10: { zaai: ["winteraandijvie (late maand)"], plant: ["knoflook", "winteruitjes"], oogst: ["pompoenen", "knolselderij", "late koolsoorten", "bieten (voor de vorst)"] },
+  11: { zaai: [], plant: ["knoflook (late maand)", "winterprei"], oogst: ["spruitjes", "winterkool", "late prei", "wortelen (voor de vorst)"] },
+  12: { zaai: [], plant: [], oogst: ["spruitjes", "winterkool", "prei", "pastinaak (na vorst zoeter)"] }
+};
+
+const PLAGEN = [
   {
-    id: "mok-handgreep",
-    naam: "Mok met handgreep",
-    soort: "ceramiek",
-    prijs: 24.5,
-    afbeelding: "images/product-mok.svg",
-    beschrijving: "Handgedraaide mok van steengoed, met een zachte speelse handgreep. Elke mok is uniek.",
-    opVoorraad: true
+    naam: "Bladluis",
+    herkennen: "Kleine (groene, zwarte of grijze) insecten in dichte groepen op jonge scheuten en bladonderkanten. Blad krult en wordt kleverig (honingdauw).",
+    aanpak: "Afspuiten met water, lieveheersbeestjes aanlokken, brandnetel- of zeepoplossing spuiten. Sterke planten houden er minder last van."
   },
   {
-    id: "schaal-oivorm",
-    naam: "Ovale schaal",
-    soort: "ceramiek",
-    prijs: 32,
-    afbeelding: "images/product-schaal.svg",
-    beschrijving: "Ovale serveerschaal in aardetinten. Mooi voor salades uit eigen tuin — of gewoon voor elke dag.",
-    opVoorraad: true
+    naam: "Slakken (naaktslakken)",
+    herkennen: "Zilverkleurige slijmsporen en gaten in blad, vooral na regen en 's nachts. Jonge plantjes kunnen in één nacht kaal worden.",
+    aanpak: "'s Avonds of vroeg in de ochtend handmatig rapen, koperlint of scherpe mulch rond gevoelige planten, eendenkroosvijver in de buurt vermijden. Vochtplaatsen opdrogen."
   },
   {
-    id: "kom-set",
-    naam: "Set van twee kommen",
-    soort: "ceramiek",
-    prijs: 45,
-    afbeelding: "images/product-kom.svg",
-    beschrijving: "Twee kommen die precies in elkaar passen. Glazuur varieert per stook — dat is het charmante.",
-    opVoorraad: false
+    naam: "Witte vlieg",
+    herkennen: "Kleine witte vlindertjes die opvliegen als je het blad raakt, plus witte poppjes op de onderkant van blad. Vaak in kas of serre.",
+    aanpak: "Gele plakstrips ophangen, aangetast blad verwijderen, natuurlijke vijanden (Encarsia) inzetten in de kas."
   },
   {
-    id: "tomatensaus",
-    naam: "Tomatensaus (pot 350 ml)",
-    soort: "keuken",
-    prijs: 6.5,
-    afbeelding: "images/product-saus.svg",
-    beschrijving: "Langzaam gestoofde saus van onze eigen tomaten, met basilicum en knoflook uit de kas. Seizoensproduct.",
-    opVoorraad: true
+    naam: "Meeldauw",
+    herkennen: "Witgrijs poederachtig laagje op de bovenkant van blad. Blad wordt daarna geel en droogt. Vooral bij droog, warm weer.",
+    aanpak: "Aangetast blad direct weghalen (niet op de compost), planten meer ruimte en lucht geven, onder i.p.v. bovenop de bladeren gieten. Melkverdunde spray kan helpen."
   },
   {
-    id: "kruidenzout",
-    naam: "Kruidenzout uit de tuin",
-    soort: "keuken",
-    prijs: 4.5,
-    afbeelding: "images/product-zout.svg",
-    beschrijving: "Grof zout met gedroogde tuinkruiden: tijm, salie, rozemarijn en een snufje chilipeper.",
-    opVoorraad: true
+    naam: "Valse meeldauw",
+    herkennen: "Geelachtige vlekken aan de bovenkant van het blad met een paarsgrijze dons aan de onderkant. Komt vooral voor bij nat weer.",
+    aanpak: "Aangetaste bladeren verwijderen, regenscherm of overkapping bij gevoelige gewassen (sla, ui), niet 's avonds gieten."
   },
   {
-    id: "droge-bonen",
-    naam: "Droge bonen (250 g)",
-    soort: "keuken",
-    prijs: 3.5,
-    afbeelding: "images/product-bonen.svg",
-    beschrijving: "Zelfgedroogde pronkbonen van het afgelopen seizoen. Perfect voor soep of als bijgerecht.",
-    opVoorraad: true
+    naam: "Rupsen (koolwitje)",
+    herkennen: "Gaten in koolbladeren en kleine zwarte streepjes (poep). Groene rupsen op de bladonderkant; bij kool vaak eitjes in legsel.",
+    aanpak: "Eitjes en rupsen handmatig zoeken en verwijderen, insectengaas over de koolbedden, vogels aanlokken. Bt-preparaat is een biologisch middel bij ernstige aantasting."
+  },
+  {
+    naam: "Aardappelziekte (phytophthora)",
+    herkennen: "Bruine watervlekken op blad met witte schimmelrand aan de onderkant, vooral vochtig warm weer. Knollen worden bruin en rottend.",
+    aanpak: "Aangetaste planten direct verwijderen (afvoeren, niet composteren), resistente rassen kiezen, niet bovenop de bladeren gieten, voldoende plantafstand."
+  },
+  {
+    naam: "Mijnvlieg",
+    herkennen: "Windinge, lichtgekleurde gangen (minen) in het blad, gemaakt door kleine larfjes. Vooral bij sla, biet en spinazie.",
+    aanpak: "Aangetaste bladeren verwijderen, insectengaas over gevoelige gewassen, niet te dicht op elkaar planten."
+  },
+  {
+    naam: "Egelantierzwam / verticillium (verwelkingsziekte)",
+    herkennen: "Plant verwelkt ondanks voldoende water, vaak aan één kant. Vaatbundels in de stengel zijn bruinig door gekleurd hout.",
+    aanpak: "Geen remedie: aangetaste planten verwijderen. Voorkom via vruchtwisseling en gezonde bodem. Niet meerdere jaren achter elkaar dezelfde familie op een perk."
+  },
+  {
+    naam: "Mieren met bladluizen",
+    herkennen: "Mieren lopen op en neer over planten die ook bladluizen hebben: ze 'melken' de luizen en beschermen ze.",
+    aanpak: "Bladluizen bestrijden zodat de mieren geen voedsel meer hebben, mierenhoop verplaatsen met een pot, plakband rond stelen bij fruitbomen."
   }
 ];
 
-const WORKSHOPS = [
-  {
-    id: "pottenbakken-intro",
-    naam: "Pottenbakken voor beginners",
-    type: "ceramiek",
-    datum: "2026-06-14",
-    duur: "2,5 uur",
-    prijs: 45,
-    plekken: 6,
-    beschrijving: "Anna neemt je mee op de draaischijf: van klomp klei naar je eigen mok. Inclusief materiaal, stook en een kop koffie uit eigen tuin.",
-    opVoorraad: true
-  },
-  {
-    id: "koken-met-de-oogst",
-    naam: "Koken met de oogst",
-    type: "keuken",
-    datum: "2026-06-28",
-    duur: "3 uur",
-    prijs: 55,
-    plekken: 8,
-    beschrijving: "We oogsten samen in de moestuin en koken een volledig seizoensmenu. Met receptenkaart om mee naar huis te nemen.",
-    opVoorraad: true
-  }
+const TAAKSJABLONEN = [
+  { naam: "Watergeven", freqDagen: 2 },
+  { naam: "Onkruid wieden", freqDagen: 7 },
+  { naam: "Bemesten (compost)", freqDagen: 30 },
+  { naam: "Mulch aanleggen", freqDagen: 60 }
 ];
 
-const BLOGPOSTS = [
-  {
-    slug: "eerste-seizoen",
-    titel: "Ons eerste seizoen op de urban boerderij",
-    datum: "2026-04-12",
-    auteur: "Cruquius Crafts",
-    afbeelding: "images/blog-eerste-seizoen.svg",
-    inleiding: "Van kale graszode naar een tuin vol perken, een kas en twee gekke tuinders. Dit is hoe het begon.",
-    tekst: `<p>Toen we de tuin overnamen stond er vooral... gras. Veel gras. In één weekend hebben we de eerste vier verhoogde bedden neergezet, en sindsdien is er geen stoppen meer aan.</p>
-<h2>Wat er nu groeit</h2>
-<p>In de kas staan de tomaten en paprika's al weken te pronken. Buiten gingen de bonen, wortels en bieten de grond in, en de sla komt op — letterlijk, om de paar weken een nieuwe rij, zodat we blijven oogsten.</p>
-<h2>Wat we geleerd hebben</h2>
-<ul>
-<li>Een bed van 60 cm breed is smal: één rij tomaten, en daartussen wortel en basilicum. Perfect.</li>
-<li>Vruchtwisseling is geen theorie maar overleving: wat vorig jaar kool was, wordt dit jaar bonen.</li>
-<li>Slakken houden van onze verhoogde bedden. Wij iets minder.</li>
-</ul>
-<p>Volgende keer meer over de oogst — en wat we ermee gaan doen in de keuken.</p>`
+// Companion planting: goede en slechte buren per gewas.
+const COMPANION = {
+  "tomaat": {
+    goed: ["basilicum", "wortel", "selderij", "ui", "peterselie", "afrikaantje", "sla"],
+    slecht: ["venkel", "kool", "aardappel", "dille (volgroeid)"]
   },
-  {
-    slug: "ceramiek-uit-eigen-hands",
-    titel: "Waarom elk stuk anders is",
-    datum: "2026-04-25",
-    auteur: "Anna",
-    afbeelding: "images/blog-ceramiek.svg",
-    inleiding: "Mokken die licht scheef staan, glazuur dat nooit twee keer hetzelfde loopt — dat is geen fout, dat is het punt.",
-    tekst: `<p>Elke mok begint als een klomp klei op de draaischijf. En elke klomp heeft zijn eigen wil. Ik kan twee identieke mokken proberen te draaien, maar de kil, het glazuur en de stook beslissen mee.</p>
-<h2>Steengoed en alledaags</h2>
-<p>Alles wat ik maak is van steengoed en gebakken op hoge temperatuur: vaatwasserbestendig, ovenbestendig, en gemaakt om elke dag te gebruiken. Niet voor in de kast, maar op tafel.</p>
-<h2>Van tuin naar tafel</h2>
-<p>Het mooiste aan Cruquius Crafts is de cirkel: de schaal die ik draaide, zit binnen een week vol tomatensaus uit onze eigen kas. En de lege mok? Die gaat weer vol met koffie terwijl de volgende oogst alweer wacht.</p>`
+  "paprika": {
+    goed: ["basilicum", "ui", "spinazie", "tomaat", "wortel"],
+    slecht: ["venkel", "koolrabi", "venkelzaad"]
+  },
+  "aubergine": {
+    goed: ["bonen", "tijm", "afrikaantje", "paprika"],
+    slecht: ["venkel"]
+  },
+  "sla": {
+    goed: ["wortel", "radijs", "aardbei", "komkommer", "ui", "biet"],
+    slecht: ["peterselie"]
+  },
+  "kool": {
+    goed: ["ui", "selderij", "biet", "dille", "kamille", "munt", "aardappel"],
+    slecht: ["tomaat", "venkel", "aardbei", "stokboon"]
+  },
+  "broccoli": {
+    goed: ["ui", "selderij", "biet", "dille", "kamille"],
+    slecht: ["tomaat", "aardbei", "venkel"]
+  },
+  "boon": {
+    goed: ["aardappel", "wortel", "komkommer", "mais", "aardbei", "bonenkruid", "radijs"],
+    slecht: ["ui", "knoflook", "venkel", "prei"]
+  },
+  "erwt": {
+    goed: ["wortel", "radijs", "komkommer", "mais", "rapen", "bonenkruid"],
+    slecht: ["ui", "knoflook", "prei", "sjalot"]
+  },
+  "ui": {
+    goed: ["wortel", "biet", "aardbei", "sla", "kamille", "paprika"],
+    slecht: ["boon", "erwt", "asperge", "salie"]
+  },
+  "knoflook": {
+    goed: ["wortel", "biet", "aardbei", "tomaat", "kamille"],
+    slecht: ["boon", "erwt", "prei", "aardappel"]
+  },
+  "prei": {
+    goed: ["wortel", "selderij", "ui", "aardbei"],
+    slecht: ["boon", "erwt"]
+  },
+  "wortel": {
+    goed: ["ui", "prei", "sla", "erwt", "tomaat", "salie", "rozemarijn", "radijs"],
+    slecht: ["dille", "venkel"]
+  },
+  "biet": {
+    goed: ["ui", "sla", "kool", "koolrabi", "knoflook"],
+    slecht: ["stokboon", "mosterd"]
+  },
+  "aardappel": {
+    goed: ["boon", "kool", "mais", "mierikswortel", "afrikaantje", "spinazie"],
+    slecht: ["tomaat", "komkommer", "zonnebloem", "venkel", "selderij"]
+  },
+  "komkommer": {
+    goed: ["boon", "erwt", "sla", "ui", "dille", "radijs", "zonnebloem"],
+    slecht: ["aardappel", "salie", "venkel"]
+  },
+  "courgette": {
+    goed: ["boon", "erwt", "mais", "bernagie", "afrikaantje"],
+    slecht: ["aardappel"]
+  },
+  "pompoen": {
+    goed: ["mais", "boon", "bernagie", "afrikaantje"],
+    slecht: ["aardappel"]
+  },
+  "spinazie": {
+    goed: ["aardbei", "erwt", "boon", "bloemkool", "radijs", "paprika"],
+    slecht: ["venkel"]
+  },
+  "aardbei": {
+    goed: ["bernagie", "sla", "ui", "spinazie", "boon", "prei"],
+    slecht: ["kool", "broccoli", "venkel"]
+  },
+  "mais": {
+    goed: ["boon", "erwt", "komkommer", "meloen", "pompoen", "aardappel"],
+    slecht: ["tomaat", "selderij"]
+  },
+  "radijs": {
+    goed: ["sla", "wortel", "erwt", "komkommer", "spinazie", "kervel"],
+    slecht: ["hyssop"]
+  },
+  "venkel": {
+    goed: [],
+    slecht: ["de meeste gewassen — zet venkel apart"]
+  },
+  "selderij": {
+    goed: ["kool", "prei", "tomaat", "boon", "leek"],
+    slecht: ["mais", "aardappel", "pastinaak"]
+  },
+  "kruiden (basilicum, dille, peterselie)": {
+    goed: ["tomaat", "paprika", "kool", "wortel"],
+    slecht: ["rue (wijnruit)"]
   }
+};
+
+function vindCompanions(naam) {
+  const n = (naam || "").toLowerCase();
+  for (const [sleutel, info] of Object.entries(COMPANION)) {
+    const delen = sleutel.split(",").map(s => s.trim().toLowerCase());
+    for (const deel of delen) {
+      if (n.includes(deel) || deel.includes(n)) return info;
+    }
+  }
+  return null;
+}
+
+// Plantafstanden in cm (ruim genomen, voor moestuin op ruggen/bedden).
+const PLANTAFSTAND = {
+  "tomaat": 50, "paprika": 40, "aubergine": 50, "peper": 40,
+  "kool": 50, "broccoli": 50, "bloemkool": 50, "spruit": 60, "paksoi": 30,
+  "koolrabi": 30, "radijs": 5, "rucola": 15,
+  "boon": 12, "erwt": 6, "tuinboon": 20,
+  "komkommer": 50, "courgette": 90, "pompoen": 120, "meloen": 60,
+  "sla": 25, "andijvie": 30, "witlof": 30,
+  "ui": 10, "knoflook": 10, "prei": 15, "sjalot": 10,
+  "wortel": 5, "pastinaak": 10, "venkel": 25,
+  "biet": 10, "spinazie": 12, "snijbiet": 30,
+  "aardappel": 35, "aardbei": 30, "mais": 35,
+  "basilicum": 25, "dille": 25, "peterselie": 15, "selderij": 30, "munt": 30,
+  "kamille": 20, "bernagie": 30, "afrikaantje": 20
+};
+
+function plantAfstand(naam) {
+  const n = (naam || "").toLowerCase();
+  for (const [sleutel, cm] of Object.entries(PLANTAFSTAND)) {
+    if (n.includes(sleutel)) return cm;
+  }
+  return 25;
+}
+
+// Bewaren van groenten: methodes en houdbaarheid.
+const BEWAREN = [
+  { naam: "Aardappel", methodes: [
+    { manier: "Donker en koel bewaren", duur: "maanden", hoe: "7–10 °C, volledig donker (papierzak of kist), never in de koelkast (wordt zoet van smaak). Niet bewaren naast ui." },
+    { manier: "In de grond laten", duur: "tot de vorst", hoe: "Ongerooide aardappelen blijven prima in de grond; oogst bij behov." }
+  ]},
+  { naam: "Ui en sjalot", methodes: [
+    { manier: "Droog en luchtig", duur: "6–12 maanden", hoe: "Eerst 2 weken laten drogen met loof eraan, dan vlechten of in netjes. Droog, geventileerd, 5–15 °C." }
+  ]},
+  { naam: "Knoflook", methodes: [
+    { manier: "Droog en donker", duur: "6–8 maanden", hoe: "Zelfde als ui: drogen met steel, dan vlechten of in mandje. Zetjes apart leggen voor het volgende seizoen." }
+  ]},
+  { naam: "Pompoen", methodes: [
+    { manier: "Kamerkoel bewaren", duur: "3–6 maanden", hoe: "10–15 °C, droog, met 5 cm steel eraan. Niet op beton. Eerst narijpen op venster." }
+  ]},
+  { naam: "Tomaat", methodes: [
+    { manier: "Nageel laten rijpen", duur: "weken", hoe: "Groene tomaten bij 15 °C op venster, tussenzit met banaan versnelt." },
+    { manier: "Saus en invriezen", duur: "12 maanden", hoe: "Passata, soep of gestoofd invriezen in bakjes — de beste manier voor grote oogsten." },
+    { manier: "Inleggen", duur: "12+ maanden", hoe: "Gesteriliseerde potten met tomaten, zout en citroenzuur of als chutney." }
+  ]},
+  { naam: "Wortel", methodes: [
+    { manier: "In zand bewaren", duur: "4–6 maanden", hoe: "Kist met licht vochtig zand, wortels rechtop erin, koel en vorstvrij (kelder, garage)." },
+    { manier: "In de grond laten", duur: "tot de vorst", hoe: "Bedekken met stro of vliesdoek; vorst maakt ze juist zoeter." }
+  ]},
+  { naam: "Rode biet", methodes: [
+    { manier: "In zand", duur: "3–5 maanden", hoe: "Zoals wortel: in zandkist, loof 2 cm boven de biet laten." },
+    { manier: "Koken en invriezen", duur: "12 maanden", hoe: "Koken, schillen, in stukken of plakken invriezen." },
+    { manier: "Inleggen (zoetzuur)", duur: "12+ maanden", hoe: "Gekookte beten in azijn-kruidenbad; klassiek bij stamppot." }
+  ]},
+  { naam: "Koolsoorten", methodes: [
+    { manier: "Ophangen", duur: "witte kool: maanden", hoe: "Witte en rode kool in koele schuur of kelder ophangen aan de stronk, 0–5 °C." },
+    { manier: "Blancheren en invriezen", duur: "12 maanden", hoe: "Broccoli, bloemkool en spruitjes: 2–3 min. blancheren, koud afspoelen, invriezen." },
+    { manier: "Fermenteren", duur: "12+ maanden", hoe: "Zuurkool van witte kool: schaven, 2% zout, stevig aandrukken, 3–6 weken fermenteren." }
+  ]},
+  { naam: "Courgette", methodes: [
+    { manier: "Invriezen", duur: "10–12 maanden", hoe: "In stukken of geraspt (voor in soep/cake), eventueel eerst licht gestoofd." },
+    { manier: "Inleggen", duur: "12 maanden", hoe: "Als pickles of in chutney — kleine exemplaren zijn hiervoor het best." }
+  ]},
+  { naam: "Bonen (snij/stok)", methodes: [
+    { manier: "Blancheren en invriezen", duur: "12 maanden", hoe: "2 min. blancheren, ijsbad, invriezen — behoudt kleur en bite." },
+    { manier: "Inleggen als zure bonen", duur: "12+ maanden", hoe: "Klassiek inlegsel met azijn, mosterdzaad en dille." },
+    { manier: "Drogen (droge boon)", duur: "jaarlijks", hoe: "Peulen laten indrogen aan de plant, bonen doppen en verder drogen." }
+  ]},
+  { naam: "Erwten", methodes: [
+    { manier: "Direct invriezen", duur: "12 maanden", hoe: "Zo snel mogelijk na plukken blancheren (1 min.) en invriezen — suiker zet snel om naar zetmeel." }
+  ]},
+  { naam: "Paprika en peper", methodes: [
+    { manier: "Invriezen", duur: "10–12 maanden", hoe: "In reepjes of heel invriezen — na ontdooien wat zachter, prima voor sauzen." },
+    { manier: "Drogen (pepers)", duur: "jaarlijks", hoe: "Pepers aan een draad ophangen op warme droge plek, of in de oven op 50 °C." }
+  ]},
+  { naam: "Prei", methodes: [
+    { manier: "In de grond laten", duur: "door de winter", hoe: "Prei is vorstbestendig; oogst naar behoefte. Bij strenge vorst afdekken met vliesdoek." },
+    { manier: "Invriezen", duur: "10 maanden", hoe: "In ringen snijden, licht blancheren, invriezen — ideaal voor soep." }
+  ]},
+  { naam: "Spinazie en snijbiet", methodes: [
+    { manier: "Blancheren en invriezen", duur: "12 maanden", hoe: "30–60 sec. blancheren, goed uitpersen, in porties invriezen." }
+  ]},
+  { naam: "Sla en radijs", methodes: [
+    { manier: "Niet lang bewaarbaar", duur: "dagen", hoe: "Sla oogst je per behoefte. Radijs: 1–2 weken in de koelkast in een zakje met wat vocht." }
+  ]},
+  { naam: "Kruiden (basilicum, peterselie, dille...)", methodes: [
+    { manier: "Invriezen in olie", duur: "6–12 maanden", hoe: "Fijnhakken, in ijsblokjesvorm met olijfolie — klaar voor in de pan." },
+    { manier: "Drogen", duur: "12 maanden", hoe: "Omgekeerd ophangen op donkere, droge plek; tijm, oregano en salie drogen het best." }
+  ]},
+  { naam: "Aardbei en klein fruit", methodes: [
+    { manier: "Invriezen op tray", duur: "10–12 maanden", hoe: "Eerst los invriezen op een bord, dan overdoen in zak — geen klont." },
+    { manier: "Jam en siroop", duur: "12+ maanden", hoe: "Klassieke jam met geleimiddel, of siroop voor in limonade." }
+  ]}
 ];
