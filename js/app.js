@@ -140,7 +140,7 @@ function gewasOpties(geselecteerd) {
 
 // ---------- weer (Open-Meteo, gratis, zonder sleutel) ----------
 const LOCATIE_SLEUTEL = "moestuin-locatie";
-const WEER_SLEUTEL = "moestuin-weer-cache";
+const WEER_SLEUTEL = "moestuin-weer-cache-v2";
 const STANDAARD_LOCATIE = { lat: 52.2711, lon: 4.6503 };
 let weerInfo = null;
 
@@ -157,12 +157,15 @@ function haalWeer(geforceerd = false) {
     Date.now() - cache.opgehaald < 60 * 60 * 1000;
   if (vers && !geforceerd) { weerInfo = cache; return Promise.resolve(cache); }
   const url = "https://api.open-meteo.com/v1/forecast?latitude=" + locatie.lat +
-    "&longitude=" + locatie.lon + "&daily=precipitation_sum&timezone=auto&forecast_days=4";
+    "&longitude=" + locatie.lon + "&daily=precipitation_sum,temperature_2m_max,temperature_2m_min&timezone=auto&forecast_days=4";
   return fetch(url).then(r => r.json()).then(j => {
     const tijd = (j.daily && j.daily.time) || [];
     const neerslag = (j.daily && j.daily.precipitation_sum) || [];
+    const tempMax = (j.daily && j.daily.temperature_2m_max) || [];
+    const tempMin = (j.daily && j.daily.temperature_2m_min) || [];
     const nieuw = { lat: locatie.lat, lon: locatie.lon, opgehaald: Date.now(),
-      dagen: tijd.map((d, i) => ({ datum: d, regenMm: neerslag[i] || 0 })) };
+      dagen: tijd.map((d, i) => ({ datum: d, regenMm: neerslag[i] || 0,
+        tempMax: tempMax[i], tempMin: tempMin[i] })) };
     localStorage.setItem(WEER_SLEUTEL, JSON.stringify(nieuw));
     weerInfo = nieuw;
     return nieuw;
@@ -201,6 +204,17 @@ function regenMmOp(iso) {
 
 function isoOverDagen(n) {
   return new Date(Date.now() + n * 86400000).toISOString().slice(0, 10);
+}
+
+function tempOp(iso) {
+  if (!weerInfo || !weerInfo.dagen) return null;
+  let dag = weerInfo.dagen.find(d => d.datum === iso);
+  if (!dag) {
+    const verschild = dagenVerschil(iso);
+    dag = verschild >= 0 && verschild < weerInfo.dagen.length ? weerInfo.dagen[verschild] : null;
+  }
+  if (!dag || typeof dag.tempMax !== "number") return null;
+  return { max: dag.tempMax, min: dag.tempMin };
 }
 
 function perkSoort(perkId) {
@@ -245,6 +259,8 @@ views.start = function () {
 
   const mmVandaag = regenMmOp(vandaag);
   const mmMorgen = regenMmOp(isoOverDagen(1));
+  const tVandaag = tempOp(vandaag);
+  const tMorgen = tempOp(isoOverDagen(1));
   const fmtMm = mm => mm.toLocaleString("nl-NL", { maximumFractionDigits: 1 }) + " mm";
   let weerInhoud = "";
   if (mmVandaag !== null) {
@@ -258,6 +274,14 @@ views.start = function () {
       : [];
     if (overslaan.length) {
       weerInhoud += `<div class="weer-tip">💡 ${overslaan.map(t => escape(t.naam)).join(", ")} kan waarschijnlijk overslaan${regenDagIso === isoOverDagen(1) ? " (morgen regen)" : ""}</div>`;
+    }
+  }
+  if (tVandaag) {
+    weerInhoud += `<div class="weer-regel">🌡️ Vandaag max ${Math.round(tVandaag.max)}° · min ${Math.round(tVandaag.min)}°</div>`;
+    const vorst = tVandaag.min <= 0 ? tVandaag.min : (tMorgen && tMorgen.min <= 0 ? tMorgen.min : null);
+    if (vorst !== null) {
+      const vorstGraden = Math.round(Math.abs(vorst)) * Math.sign(vorst);
+      weerInhoud += `<div class="weer-tip">❄️ Vorst verwacht (nacht ${vorstGraden}°) — gevoelige planten afdekken</div>`;
     }
   }
   const weerBron = weerInfo
@@ -1271,7 +1295,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "2.1";
+const APP_VERSIE = "2.2";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;
