@@ -270,6 +270,28 @@ views.start = function () {
       ${weerInhoud}${weerBron}
     </div>` : "";
 
+  const trayGewassen = data.gewassen.filter(g => g.voorzaai && g.status !== "klaar");
+  const trayKaart = trayGewassen.length ? `
+    <div class="kaart">
+      <div class="sectie-kop"><h2>🌱 In trays</h2>
+        <button class="knop klein secundair" data-ga="gewassen">Alles bekijken</button></div>
+      ${trayGewassen.map(g => {
+        const d = g.uitplantDatum ? dagenVerschil(g.uitplantDatum) : null;
+        const cls = d !== null && d < 0 ? "achterstall" : d !== null && d <= 3 ? "vandaag" : "";
+        const label = d === null ? g.trayDatum ? "gezaaid " + mooieDatum(g.trayDatum) : "nog niet gezaaid"
+          : d < 0 ? "uitplanten " + mooieDatum(g.uitplantDatum) + " · " + (-d) + " d. te laat"
+          : d === 0 ? "vandaag uitplanten"
+          : "uitplanten " + mooieDatum(g.uitplantDatum) + " · over " + d + " d.";
+        return `<div class="taak ${cls}">
+          <div class="info">
+            <div class="naam">🌱 ${escape(g.naam)}${g.ras ? " (" + escape(g.ras) + ")" : ""}</div>
+            <div class="meta">${label}</div>
+          </div>
+          ${d !== null && d <= 3 ? '<span class="badge oranje">uitplanten</span>' : ""}
+        </div>`;
+      }).join("")}
+    </div>` : "";
+
   const perkenOverzicht = data.perken.map(p => {
     const gewassen = data.gewassen.filter(g => g.perkId === p.id && g.status !== "klaar");
     return `<button class="perk-chip" data-ga="perken">
@@ -293,6 +315,8 @@ views.start = function () {
     </div>
 
     ${weerKaart}
+
+    ${trayKaart}
 
     <div class="kaart">
       <div class="sectie-kop"><h2>Mijn perken</h2>
@@ -361,6 +385,20 @@ function oogstTotaal(gewasId) {
     n.toLocaleString("nl-NL", { maximumFractionDigits: 2 }) + " " + e
   );
   return delen.join(" · ");
+}
+
+function trayRegel(g) {
+  if (!g.voorzaai) return "";
+  const delen = [];
+  if (g.trayDatum) delen.push("in trays sinds " + mooieDatum(g.trayDatum));
+  if (g.uitplantDatum) {
+    const d = dagenVerschil(g.uitplantDatum);
+    const label = d < 0 ? "uitplanten " + mooieDatum(g.uitplantDatum) + " — " + (-d) + " d. te laat!"
+      : d === 0 ? "vandaag uitplanten!"
+      : "uitplanten " + mooieDatum(g.uitplantDatum) + " (over " + d + " d.)";
+    delen.push(label);
+  }
+  return delen.length ? `<div class="sub tray-regel">🌱 ${escape(delen.join(" · "))}</div>` : "";
 }
 
 function fotoRij(g) {
@@ -461,6 +499,7 @@ views.gewassen = function () {
           <span class="badge ${statusKleur}">${escape(g.status)}</span>
         </div>
         ${compRegel}
+        ${trayRegel(g)}
         ${fotoRij(g)}
         ${oogstRegel(g)}
         <div class="acties" style="justify-content:flex-end; display:flex; gap:6px;">
@@ -489,6 +528,14 @@ function gewasFormulier(gewas) {
     <div class="form-rij">
       <label class="veld">Zaaidatum<input type="date" name="zaaidatum" value="${escape(gewas.zaaidatum || "")}"></label>
       <label class="veld">Oogstdatum<input type="date" name="oogstDatum" value="${escape(gewas.oogstDatum || "")}"></label>
+    </div>
+    <label class="check-rij" style="font-weight:600;">
+      <input type="checkbox" name="voorzaai" ${gewas.voorzaai ? "checked" : ""}>
+      🌱 Voorzaaien in trays
+    </label>
+    <div class="form-rij">
+      <label class="veld">Gezaaid in trays<input type="date" name="trayDatum" value="${escape(gewas.trayDatum || "")}"></label>
+      <label class="veld">Uitplanten in bed<input type="date" name="uitplantDatum" value="${escape(gewas.uitplantDatum || "")}"></label>
     </div>
     <label class="veld">Status<select name="status">${statusOpties}</select></label>
     <label class="veld">Opmerking<textarea name="opmerking">${escape(gewas.opmerking || "")}</textarea></label>
@@ -934,6 +981,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
         id: uid(), naam: w.naam, ras: w.ras, perkId: w.perkId || null,
         zaaidatum: w.zaaidatum || null, oogstDatum: w.oogstDatum || null,
         status: w.status, opmerking: w.opmerking,
+        voorzaai: !!w.voorzaai, trayDatum: w.trayDatum || null, uitplantDatum: w.uitplantDatum || null,
         fotoVoor: fotoVoor || null, fotoAchter: fotoAchter || null,
         jaar: new Date().getFullYear()
       };
@@ -959,6 +1007,7 @@ document.getElementById("inhoud").addEventListener("click", e => {
         naam: w.naam, ras: w.ras, perkId: w.perkId || null,
         zaaidatum: w.zaaidatum || null, oogstDatum: w.oogstDatum || null,
         status: w.status, opmerking: w.opmerking,
+        voorzaai: !!w.voorzaai, trayDatum: w.trayDatum || null, uitplantDatum: w.uitplantDatum || null,
         fotoVoor: w.verwijderFotoVoor ? null : (fotoVoor || g.fotoVoor || null),
         fotoAchter: w.verwijderFotoAchter ? null : (fotoAchter || g.fotoAchter || null)
       });
@@ -1130,7 +1179,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "1.9";
+const APP_VERSIE = "2.0";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;

@@ -1,5 +1,5 @@
 // Service worker: cached de app-bestanden zodat de app offline werkt.
-const CACHE_NAAM = "moestuin-app-v14";
+const CACHE_NAAM = "moestuin-app-v15";
 const BESTANDEN = [
   "./",
   "./index.html",
