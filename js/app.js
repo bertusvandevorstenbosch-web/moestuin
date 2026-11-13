@@ -2,7 +2,7 @@
 
 const OPSLAGSLEUTEL = "moestuin-data-v1";
 
-const legeData = () => ({ perken: [], gewassen: [], taken: [], logboek: [], oogsten: [] });
+const legeData = () => ({ perken: [], gewassen: [], taken: [], logboek: [], oogsten: [], compost: [] });
 
 let data = laagData();
 
@@ -852,6 +852,63 @@ views.plagen = function () {
 };
 
 // ---------- MEER ----------
+// ---------- COMPOST ----------
+function compostKlaarDatum(start) {
+  if (!start) return null;
+  const d = new Date(start + "T00:00:00");
+  d.setMonth(d.getMonth() + 9);
+  return d.toISOString().slice(0, 10);
+}
+
+function compostFormulier(hoop) {
+  hoop = hoop || {};
+  return `
+    <label class="veld">Naam<input name="naam" required value="${escape(hoop.naam || "")}" placeholder="bijv. Composthoop 1"></label>
+    <label class="veld">Gestart op<input type="date" name="startDatum" required value="${escape(hoop.startDatum || vandaagISO())}"></label>
+    <label class="veld">Opmerking (optioneel)<input name="opmerking" value="${escape(hoop.opmerking || "")}" placeholder="bijv. palletbak, 1 m³"></label>
+    ${hoop.id ? "" : `<label class="check-rij" style="font-weight:600;">
+      <input type="checkbox" name="herinnering" checked style="width:auto">
+      Herinnering: elke 4 weken omdraaien (komt in je takenlijst)
+    </label>`}`;
+}
+
+views.compost = function () {
+  const lijst = data.compost.map(h => {
+    const klaar = compostKlaarDatum(h.startDatum);
+    const geleden = h.laatsteDraai ? -dagenVerschil(h.laatsteDraai) : null;
+    const draaiTekst = !h.laatsteDraai ? "nog nooit omgedraaid"
+      : geleden === 0 ? "vandaag omgedraaid"
+      : "laatst omgedraaid " + mooieDatum(h.laatsteDraai) + " (" + geleden + " d. geleden)";
+    return `
+      <div class="kaart">
+        <div class="item">
+          <div class="info">
+            <div class="titel">♻️ ${escape(h.naam)}</div>
+            <div class="sub">gestart ${mooieDatum(h.startDatum)}${h.opmerking ? " · " + escape(h.opmerking) : ""}</div>
+            <div class="sub">geschat klaar: ${klaar ? mooieDatum(klaar) : "—"}</div>
+            <div class="sub">${draaiTekst}</div>
+          </div>
+          <div class="acties">
+            <button class="knop klein" data-draai-compost="${h.id}">↻ Omdraaien</button>
+            <button class="knop klein secundair" data-bewerk-compost="${h.id}">Bewerk</button>
+            <button class="knop klein gevaar" data-verwijder-compost="${h.id}">×</button>
+          </div>
+        </div>
+      </div>`;
+  }).join("");
+
+  return `
+    <div class="sectie-kop"><h2>Compost</h2>
+      <button class="knop klein" data-nieuw-compost>+ Nieuwe hoop</button></div>
+    ${lijst || '<div class="kaart"><div class="leeg">Nog geen composthoop. Start er één — de app onthoudt wanneer hij naar verwachting klaar is en herinnert je aan het omdraaien.</div></div>'}
+    <div class="kaart">
+      <h2>✅ Mag erin</h2>
+      <p style="font-size:0.88rem;">Groente- en fruitresten, koffiedik, eierschalen, tuinafval, klein snoeiafval, bladeren, stro.</p>
+      <h2 style="margin-top:12px;">🚫 Niet erin</h2>
+      <p style="font-size:0.88rem;">Gekookt eten, vlees en vis, zieke planten, onkruid met zaden, kattenbakhoudend afval, veel citrus.</p>
+    </div>`;
+};
+
 views.meer = function () {
   return `
     <div class="sectie-kop"><h2>Meer</h2></div>
@@ -1125,6 +1182,41 @@ document.getElementById("inhoud").addEventListener("click", e => {
     return render();
   }
 
+  if (d.nieuwCompost !== undefined) {
+    return openModal("Nieuwe composthoop", compostFormulier(), w => {
+      data.compost.push({
+        id: uid(), naam: w.naam, startDatum: w.startDatum,
+        opmerking: w.opmerking, laatsteDraai: null
+      });
+      if (w.herinnering) {
+        data.taken.push({
+          id: uid(), naam: "Compost omdraaien (" + w.naam + ")", perkId: null, cropId: null,
+          freqDagen: 28, volgendeDatum: isoOverDagen(28)
+        });
+      }
+      bewaar(); render(); toast("Composthoop toegevoegd ♻️");
+    });
+  }
+  if (d.bewerkCompost) {
+    const h = data.compost.find(x => x.id === d.bewerkCompost);
+    return openModal("Composthoop bewerken", compostFormulier(h), w => {
+      Object.assign(h, { naam: w.naam, startDatum: w.startDatum, opmerking: w.opmerking });
+      bewaar(); render(); toast("Composthoop bijgewerkt");
+    });
+  }
+  if (d.draaiCompost) {
+    const h = data.compost.find(x => x.id === d.draaiCompost);
+    if (!h) return;
+    h.laatsteDraai = vandaagISO();
+    bewaar(); render(); toast("Omdraaien geregistreerd ♻️");
+  }
+  if (d.verwijderCompost) {
+    return bevestig("Composthoop verwijderen?", () => {
+      data.compost = data.compost.filter(x => x.id !== d.verwijderCompost);
+      bewaar(); render(); toast("Composthoop verwijderd");
+    });
+  }
+
   if (d.export !== undefined) {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
     const a = document.createElement("a");
@@ -1179,7 +1271,7 @@ document.addEventListener("change", e => {
 });
 
 // service worker registreren (offline gebruik) + automatisch herladen bij nieuwe versie
-const APP_VERSIE = "2.0.1";
+const APP_VERSIE = "2.1";
 if ("serviceWorker" in navigator) {
   navigator.serviceWorker.register("sw.js").catch(() => {});
   let reedsHerladen = false;
